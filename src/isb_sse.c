@@ -175,6 +175,37 @@ static uint64_t k_shufps_tp(unsigned long long iters){ __m128 a=_mm_set_ps(4,3,2
     return ib_sig128(_mm_castps_si128(a))^ib_sig128(_mm_castps_si128(b))^
            ib_sig128(_mm_castps_si128(c))^ib_sig128(_mm_castps_si128(d)); }
 /* ---- SSE2 族 ---- */
+/* ---- sse2_paddd 的 b8: 连续8指令块执行时间(同行新列, 不新建 case 行) ----
+ * 与单指令 paddd_tp(4 链共享同一 wrot)对照: 8 个 wrot 相位起点错开 2 块,
+ * 同轮 8 条 paddd 操作数互异且逐轮轮转 —— 防"同值重复"被数据级优化利用;
+ * 只测每块执行 ns(定时长窗口), 结果与 paddd 行 lat_ns/tput_ops 同列族对照;
+ * 链初值用互异大常数(非连续小整数): 周期对称下 8 链只差初值, 若初值
+ * 连续(1..8)+lane 等距会令 sig16 数学归零(实测恒 0000) —— 乱序种子
+ * 打破相消, 签名恢复区分度。
+ * x86-64: 8 链; i386 仅 8 个 xmm: 4 链 x 每轮 2 相位, 块内仍 8 条连续指令。 */
+static uint64_t k_paddd_b8(unsigned long long iters){
+#ifdef __x86_64__
+    __m128i a0=_mm_set1_epi32(0x9e3779b9),a1=_mm_set1_epi32(0x85ebca6b),a2=_mm_set1_epi32(0xc2b2ae35),a3=_mm_set1_epi32(0x27d4eb2f),
+            a4=_mm_set1_epi32(0x165667b1),a5=_mm_set1_epi32(0xd5a9d4c5),a6=_mm_set1_epi32(0xbe9e7c55),a7=_mm_set1_epi32(0x53e5a0c2);
+    int k0=0,k1=2,k2=4,k3=6,k4=8,k5=10,k6=12,k7=14; unsigned long long i;
+    for(i=0;i<iters;i++){
+        a0=_mm_add_epi32(a0,wrot(&k0)); a1=_mm_add_epi32(a1,wrot(&k1));
+        a2=_mm_add_epi32(a2,wrot(&k2)); a3=_mm_add_epi32(a3,wrot(&k3));
+        a4=_mm_add_epi32(a4,wrot(&k4)); a5=_mm_add_epi32(a5,wrot(&k5));
+        a6=_mm_add_epi32(a6,wrot(&k6)); a7=_mm_add_epi32(a7,wrot(&k7)); }
+    return ib_sig128(a0)^ib_sig128(a1)^ib_sig128(a2)^ib_sig128(a3)^
+           ib_sig128(a4)^ib_sig128(a5)^ib_sig128(a6)^ib_sig128(a7);
+#else
+    __m128i a=_mm_set1_epi32(0x9e3779b9),b=_mm_set1_epi32(0x85ebca6b),c=_mm_set1_epi32(0xc2b2ae35),d=_mm_set1_epi32(0x27d4eb2f);
+    int k0=0,k1=2,k2=4,k3=6,k4=8,k5=10,k6=12,k7=14; unsigned long long i;
+    for(i=0;i<iters;i++){          /* 4 链 x 每轮 2 相位, 块内仍 8 条连续 paddd */
+        a=_mm_add_epi32(a,wrot(&k0)); b=_mm_add_epi32(b,wrot(&k1));
+        c=_mm_add_epi32(c,wrot(&k2)); d=_mm_add_epi32(d,wrot(&k3));
+        a=_mm_add_epi32(a,wrot(&k4)); b=_mm_add_epi32(b,wrot(&k5));
+        c=_mm_add_epi32(c,wrot(&k6)); d=_mm_add_epi32(d,wrot(&k7)); }
+    return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d);
+#endif
+}
 static uint64_t k_xorps(unsigned long long iters){ __m128 a=_mm_set1_ps(1.0f); int k=0;
     unsigned long long i; for(i=0;i<iters;i++) a=_mm_xor_ps(a,_mm_castsi128_ps(wrot(&k)));
     return ib_sig128(_mm_castps_si128(a)); }
@@ -511,7 +542,8 @@ static const ib_case g_cases[] = {
     { "sse_shufps",      NULL,     k_shufps,        k_shufps_tp,        0, NULL, 0 },
     { "sse_xorps",       NULL,     k_xorps,         k_xorps_tp,         0, NULL, 0 },
     { "sse2_pcmpeqd",    NULL,     k_pcmpeqd,       k_pcmpeqd_tp,       0, NULL, 0 },
-    { "sse2_paddd",      NULL,     k_paddd,         k_paddd_tp,         0, NULL, 0 },
+    { "sse2_paddd",      NULL,     k_paddd,         k_paddd_tp,         0, NULL, 0,
+      k_paddd_b8 },
     { "sse2_paddw",      NULL,     k_paddw,         k_paddw_tp,         0, NULL, 0 },
     { "sse2_pmaddwd",    NULL,     k_pmaddwd,       k_pmaddwd_tp,       0, NULL, 0 },
     { "sse2_addpd",      NULL,     k_addpd,         k_addpd_tp,         0, NULL, 0 },

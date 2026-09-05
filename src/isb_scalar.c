@@ -55,6 +55,63 @@ static uint64_t k_add_r64_tp(unsigned long long iters)
 #endif
 }
 
+/* ---- x86_add_r64 的 b8: 连续8指令块执行时间(同行新列, 不新建 case 行) ----
+ * 块 = 8 条连续相同指令(addq/addl), 各作用于独立累加链, 操作数来自
+ * g_b8 确定性缓冲的 8 个相位(同轮互异、8B 步进轮转不重复) —— 与单指令
+ * tput 的固定常数源区分, 防"同值重复"被数据级优化利用;
+ * 测每块(8 连)平均执行 ns, 与同 run 单指令行 lat_ns/tput_ops 对照判块级
+ * 优化(判定口径见 README)。x86-64: 8 链; i386(仅 7 GPR): 4 链 x 每轮 2
+ * 相位, 块内仍 8 条连续指令。asm volatile 单基址+位移: 防 "m" 地址提升。 */
+static uint64_t g_b8[144] __attribute__((aligned(64)));  /* 18x64B: o+位移 最大 1072B 不越界 */
+static uint64_t k_add_r64_b8(unsigned long long iters)
+{
+    uintptr_t o = 0;
+    unsigned long long i;
+#ifdef __x86_64__
+    uint64_t a0 = 0x1122334455667788ULL, a1 = 0x9e3779b97f4a7c15ULL,
+             a2 = 0x243f6a8885a308d3ULL, a3 = 0x13198a2e03707344ULL,
+             a4 = 0xa4093822299f31d0ULL, a5 = 0x082efa98ec4e6c89ULL,
+             a6 = 0x452821e638d01377ULL, a7 = 0xbe5466cf34e90c6cULL;
+    for (i = 0; i < iters; i++) {
+        const void *p = (const void *)((uintptr_t)g_b8 + o);
+        __asm__ volatile(
+            "addq 0(%8),%0\n\t"
+            "addq 8(%8),%1\n\t"
+            "addq 16(%8),%2\n\t"
+            "addq 24(%8),%3\n\t"
+            "addq 32(%8),%4\n\t"
+            "addq 40(%8),%5\n\t"
+            "addq 48(%8),%6\n\t"
+            "addq 56(%8),%7"
+            : "+r"(a0), "+r"(a1), "+r"(a2), "+r"(a3),
+              "+r"(a4), "+r"(a5), "+r"(a6), "+r"(a7)
+            : "r"(p)
+            : "memory");
+        o = (o + 8) & 1023u;  /* 1KB 内 8B 步进轮转, 终点确定(4096x8 mod 1024 = 0) */
+    }
+    return a0 ^ a1 ^ a2 ^ a3 ^ a4 ^ a5 ^ a6 ^ a7;
+#else
+    uint32_t a = 0x11223344u, b = 0x9e3779b9u, c = 0x243f6a88u, d = 0x13198a2eu;
+    for (i = 0; i < iters; i++) {
+        const void *p = (const void *)((uintptr_t)g_b8 + o);
+        __asm__ volatile(
+            "addl 0(%4),%0\n\t"
+            "addl 8(%4),%1\n\t"
+            "addl 16(%4),%2\n\t"
+            "addl 24(%4),%3\n\t"
+            "addl 32(%4),%0\n\t"
+            "addl 40(%4),%1\n\t"
+            "addl 48(%4),%2\n\t"
+            "addl 56(%4),%3"
+            : "+r"(a), "+r"(b), "+r"(c), "+r"(d)
+            : "r"(p)
+            : "memory");
+        o = (o + 8) & 1023u;  /* 1KB 内 8B 步进轮转(i386 同 x64: 不越界) */
+    }
+    return (uint64_t)a ^ ((uint64_t)b << 16) ^ ((uint64_t)c << 32) ^ ((uint64_t)d << 48);
+#endif
+}
+
 /* ---------------- mul_r64: 乘法延迟链(链不可闭式折叠) ---------------- */
 static uint64_t k_mul_r64(unsigned long long iters)
 {
@@ -235,7 +292,8 @@ static uint64_t k_bsf_tp(unsigned long long iters)
 /* ---------------- 用例表(声明式; 名字首段=ISA 段: x86 基线/sse42/popcnt/abm;
  * 原名首段即能力名者(popcnt)不叠加; cap 空 = 恒支持) ---------------- */
 static const ib_case g_cases[] = {
-    { "x86_add_r64", NULL,        k_add_r64,   k_add_r64_tp,  0 },
+    { "x86_add_r64", NULL,        k_add_r64,      k_add_r64_tp, 0, NULL, 0,
+      k_add_r64_b8 },
     { "x86_mul_r64", NULL,        k_mul_r64,   k_mul_r64_tp,  0 },
     { "sse42_crc32", "sse4.2",    k_crc32,     k_crc32_tp,    0 },
     { "popcnt",      "popcnt",    k_popcnt,    k_popcnt_tp,   0 },
@@ -247,6 +305,11 @@ static const ib_case g_cases[] = {
 
 int main(int argc, char **argv)
 {
+    int i;
+    volatile uint64_t *vb = g_b8;   /* volatile 写: 内容对编译器不可知, 防 0 传播/常数化 */
+    for (i = 0; i < 144; i++)
+        vb[i] = (uint64_t)(i * 13 + 7) * 0x9e3779b97f4a7c15ULL;
+    __asm__ volatile("" : "+m"(g_b8[0]) : : "memory");
     ib_init(argc, argv);
     ib_hdr("scalar", NCASES);
     ib_run_cases("scalar", g_cases, NCASES);

@@ -19,11 +19,14 @@
  *   - AVX/FMA 用例由组文件内 __attribute__((target(...))) 单独发 VEX。
  *
  * 输出行格式(单表 CSV, 同列布局同表头, xlsx 软件可直接导入):
- * 每行 = 一个指令(case), 各测试方式做列; 首行表头(26 列):
+ * 每行 = 一个指令(case), 各测试方式做列; 首行表头(29 列):
  *   kind,group,abi,os,bits,tput_sec,lat_iters,case,
  *   lat_st,lat_ns,lat_sig,tput_st,tput_ops,tput_mbs,tput_sig,
+ *   block8_st,block8_ns,block8_sig,
  *   sem_st,sem_sig,sem_tag,kat_st,kat_det,diag_st,diag_v,diag_u,diag_det,
  *   ok,total
+ * block8_* = 连续8指令块(8 连独立链)执行时间 ns/块 + 稳定签名; 只有注册
+ * 了 b8 函数的用例填值(该行适合 8 连形态), 其余行三列空 '-'。
  * 用例行 kind=T: 该指令出现的测试方式填对应列, 未测方式填 '-'; 状态列
  *   (CRASH/HOSTUNSUPPORTED/OK) 逐方式独立; 组尾行 kind=D 只填 group/ok/total
  * 每次 exec 的 stdout = 1 表头 + N 行 T + 1 行 D(无任何其它 stdout)。
@@ -61,7 +64,7 @@ typedef sigjmp_buf ib_jmp_t;
 /* ---------------- 运行参数(ib_init 填充) ---------------- */
 extern double g_tput_sec;               /* tput 定时窗口秒, 默认 0.5 */
 extern unsigned long long g_lat_iters;  /* lat 依赖链迭代数, 默认 2000000 */
-extern int g_do_lat, g_do_tput, g_do_sem;  /* 三个 metric 开关 */
+extern int g_do_lat, g_do_tput, g_do_sem, g_do_b8;  /* 四个 metric 开关 */
 extern const char *g_only;              /* 用例名前缀过滤(NULL=全部) */
 extern const char *g_abi, *g_os;        /* 构建目标标识 */
 
@@ -108,9 +111,10 @@ __attribute__((target("avx"))) static inline uint64_t ib_sig256(__m256i v)
  * flush 在同一函数序内完成(单线程), 无跨函数存活冲突。
  */
 enum { WV_LAT_ST, WV_LAT_NS, WV_LAT_SIG, WV_TPUT_ST, WV_TPUT_OPS,
-       WV_TPUT_MBS, WV_TPUT_SIG, WV_SEM_ST, WV_SEM_SIG, WV_SEM_TAG,
+       WV_TPUT_MBS, WV_TPUT_SIG, WV_B8_ST, WV_B8_NS, WV_B8_SIG,
+       WV_SEM_ST, WV_SEM_SIG, WV_SEM_TAG,
        WV_KAT_ST, WV_KAT_DET, WV_DIAG_ST, WV_DIAG_V, WV_DIAG_U, WV_DIAG_DET };
-static char ib_wv[16][40];
+static char ib_wv[19][40];
 static char ib_wgrp[24], ib_wcase[48];
 static int ib_row_mode = 0;          /* 1 = case 表内(尾 flush); 0 = 立即 flush */
 
@@ -118,7 +122,7 @@ static void ib_wreset(void)
 {
     int i;
     ib_wgrp[0] = ib_wcase[0] = '\0';
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < 19; i++)
         ib_wv[i][0] = '\0';
 }
 static void ib_wset(int idx, const char *v)
@@ -132,14 +136,16 @@ static const char *ib_wget(int idx)
 static void ib_flush(void)
 {
     printf("T,%s,%s,%s,%d,%.1f,%llu,%s,"
-           "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,-,-\n",
+           "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,-,-\n",
            ib_wgrp[0] ? ib_wgrp : "-", g_abi, g_os,
            (int)(sizeof(void *) * 8), g_tput_sec,
            (unsigned long long)g_lat_iters, ib_wcase[0] ? ib_wcase : "-",
            ib_wget(WV_LAT_ST), ib_wget(WV_LAT_NS), ib_wget(WV_LAT_SIG),
            ib_wget(WV_TPUT_ST), ib_wget(WV_TPUT_OPS), ib_wget(WV_TPUT_MBS),
-           ib_wget(WV_TPUT_SIG), ib_wget(WV_SEM_ST), ib_wget(WV_SEM_SIG),
-           ib_wget(WV_SEM_TAG), ib_wget(WV_KAT_ST), ib_wget(WV_KAT_DET),
+           ib_wget(WV_TPUT_SIG), ib_wget(WV_B8_ST), ib_wget(WV_B8_NS),
+           ib_wget(WV_B8_SIG),
+           ib_wget(WV_SEM_ST), ib_wget(WV_SEM_SIG), ib_wget(WV_SEM_TAG),
+           ib_wget(WV_KAT_ST), ib_wget(WV_KAT_DET),
            ib_wget(WV_DIAG_ST), ib_wget(WV_DIAG_V), ib_wget(WV_DIAG_U),
            ib_wget(WV_DIAG_DET));
     ib_wreset();
@@ -179,6 +185,18 @@ void ib_tput(const char *grp, const char *name, const char *st,
     snprintf(ib_wv[WV_TPUT_SIG], sizeof ib_wv[WV_TPUT_SIG], "%016llx",
              (unsigned long long)sig);
 }
+/* ---- block8: 连续8指令块执行时间 ns(同行新列, 不新建 case 行) ---- */
+void ib_b8(const char *grp, const char *name, const char *st,
+           double ns, uint64_t sig, const char *detail)
+{
+    (void)detail;
+    snprintf(ib_wgrp, sizeof ib_wgrp, "%s", grp ? grp : "");
+    snprintf(ib_wcase, sizeof ib_wcase, "%s", name ? name : "");
+    ib_wset(WV_B8_ST, st);
+    snprintf(ib_wv[WV_B8_NS], sizeof ib_wv[WV_B8_NS], "%.2f", ns);
+    snprintf(ib_wv[WV_B8_SIG], sizeof ib_wv[WV_B8_SIG], "%016llx",
+             (unsigned long long)sig);
+}
 void ib_sem(const char *grp, const char *name, const char *st,
             uint64_t sig, const char *detail)
 {
@@ -194,6 +212,7 @@ void ib_unsup(const char *grp, const char *name, const char *metric,
               const char *cap)
 {
     int idx = !strcmp(metric, "tput") ? WV_TPUT_ST :
+              !strcmp(metric, "block8") ? WV_B8_ST :
               !strcmp(metric, "sem")  ? WV_SEM_ST : WV_LAT_ST;
     (void)cap;
     snprintf(ib_wgrp, sizeof ib_wgrp, "%s", grp ? grp : "");
@@ -242,6 +261,7 @@ void ib_hdr(const char *grp, int ncases)
     (void)grp; (void)ncases;
     printf("kind,group,abi,os,bits,tput_sec,lat_iters,case,"
            "lat_st,lat_ns,lat_sig,tput_st,tput_ops,tput_mbs,tput_sig,"
+           "block8_st,block8_ns,block8_sig,"
            "sem_st,sem_sig,sem_tag,kat_st,kat_det,diag_st,diag_v,diag_u,"
            "diag_det,ok,total\n");
     ib_wreset();
@@ -297,6 +317,7 @@ static LONG WINAPI ib_veh(PEXCEPTION_POINTERS ep)
 void ib_crash(const char *grp, const char *name, const char *metric, int sig_nr)
 {
     int idx = !strcmp(metric, "tput") ? WV_TPUT_ST :
+              !strcmp(metric, "block8") ? WV_B8_ST :
               !strcmp(metric, "sem")  ? WV_SEM_ST :
               !strcmp(metric, "kat")  ? WV_KAT_ST :
               !strcmp(metric, "diag") ? WV_DIAG_ST : WV_LAT_ST;
@@ -382,6 +403,8 @@ typedef struct {
     ib_fn sem;              /* 语义对拍: 单次执行(忽略 iters)返回全宽签名; NULL = 无 sem */
     const char *tag;        /* sem 的 detail 标签(如寄存器高半分类), NULL = 无 */
     unsigned bpop;          /* tput 每 op 处理字节数(折算 v2=MB/s), 0 = 不折算 */
+    ib_fn b8;               /* 连续8指令块(8 连独立链): 定时长测每块执行 ns + 稳定签名;
+                             * NULL = 该行不适合 8 连, block8 三列空。同指令同行不同列 */
 } ib_case;
 
 /* 名字过滤(前缀匹配, 逗号分隔多前缀, 与 legacy -only= 同语义) */
@@ -488,6 +511,54 @@ static int ib_case_tput(const char *grp, const ib_case *c)
     return 0;
 }
 
+/* ---- block8: 连续8指令块执行时间 ns/块(同 tput 定时长窗口内核, 只报时间) ----
+ * 语义: 块 = 同一指令 8 连、各作用独立链、互异确定性数据; 结果 = 每块
+ * 平均执行 ns(块轮速倒数), 与 lat_ns(单指令链延迟)同列族语义、同 run 内
+ * 对照判块级优化。稳定签名同样取固定 4096 次调用(窗口批数无关)。 */
+static int ib_case_b8(const char *grp, const ib_case *c)
+{
+    double window = g_tput_sec;
+#ifdef _WIN32
+    ib_cur_set(grp, c->name, "block8");
+#endif
+    ib_sig_nr = 0;
+    ib_intest = 1;
+    if (IB_SIGSETJMP(ib_jb) == 0) {
+        unsigned long long K, n = 0;
+        uint64_t sig = 0;
+        double t0, t1, el = 0;
+        t0 = ib_now();
+        sig = c->b8(4096);            /* 试跑估速 */
+        IB_BARRIER();
+        el = ib_now() - t0;
+        if (el > 1e-6)
+            K = (unsigned long long)(30000.0 * 4096.0 / el);
+        else
+            K = 1u << 16;
+        if (K < 1024)
+            K = 1024;
+        if (K > (1ull << 26))
+            K = 1ull << 26;
+        el = 0;
+        do {                          /* 定时长窗口, 只累计块执行时间 */
+            t1 = ib_now();
+            sig = c->b8(K);
+            el += ib_now() - t1;
+            n++;
+        } while (el < window * 1e9);
+        IB_BARRIER();
+        sig = c->b8(4096);            /* 稳定签名(与批数无关, 跨机逐位可复现) */
+        IB_BARRIER();
+        ib_intest = 0;
+        if (el > 0 && n * K > 0)
+            ib_b8(grp, c->name, "OK", el / (double)(n * K), sig, "-");
+        return 1;
+    }
+    ib_intest = 0;
+    ib_crash(grp, c->name, "block8", (int)ib_sig_nr);
+    return 0;
+}
+
 /* ---- sem: 单次执行语义对拍(不计时; 结果全宽签名逐位跨机比较) ---- */
 static int ib_case_sem(const char *grp, const ib_case *c)
 {
@@ -507,8 +578,9 @@ static int ib_case_sem(const char *grp, const ib_case *c)
     return 0;
 }
 
-/* 逐用例: 门控 -> lat -> tput -> sem(各自独立兜底: 崩只记该方式 CRASH,
- * 不阻断其它); 该 case 全部方式完成后 flush 一行宽 CSV。 */
+/* 逐用例: 门控 -> lat -> tput -> block8 -> sem(各自独立兜底: 崩只记该方式
+ * CRASH, 不阻断其它); block8 为可空方式: 未注册 b8 的行三列留空, 不输出。
+ * 该 case 全部方式完成后 flush 一行宽 CSV。 */
 static int ib_run_case(const char *grp, const ib_case *c)
 {
     int allok = 1;
@@ -518,6 +590,8 @@ static int ib_run_case(const char *grp, const ib_case *c)
             ib_unsup(grp, c->name, "lat", c->cap);
         if (g_do_tput && c->tput)
             ib_unsup(grp, c->name, "tput", c->cap);
+        if (g_do_b8 && c->b8)
+            ib_unsup(grp, c->name, "block8", c->cap);
         if (g_do_sem && c->sem)
             ib_unsup(grp, c->name, "sem", c->cap);
         ib_flush();
@@ -528,6 +602,8 @@ static int ib_run_case(const char *grp, const ib_case *c)
         allok = 0;
     if (g_do_tput && c->tput && !ib_case_tput(grp, c))
         allok = 0;
+    if (g_do_b8 && c->b8 && !ib_case_b8(grp, c))
+        allok = 0;
     if (g_do_sem && c->sem && !ib_case_sem(grp, c))
         allok = 0;
     ib_flush();
@@ -535,10 +611,10 @@ static int ib_run_case(const char *grp, const ib_case *c)
     return allok;
 }
 
-/* 组尾行(kind=D): 26 列同布局, 只填 group/ok/total */
+/* 组尾行(kind=D): 29 列同布局, 只填 group/ok/total */
 void ib_done(const char *grp, int ok, int tot)
 {
-    printf("D,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,%d,%d\n",
+    printf("D,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,%d,%d\n",
            grp, ok, tot);
 }
 
@@ -596,12 +672,14 @@ void ib_init(int argc, char **argv)
             g_do_lat = 0;
         } else if (!strcmp(argv[i], "--no-tput")) {
             g_do_tput = 0;
+        } else if (!strcmp(argv[i], "--no-b8")) {
+            g_do_b8 = 0;
         } else if (!strcmp(argv[i], "--no-sem")) {
             g_do_sem = 0;
         } else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
             fprintf(stderr, "usage: %s [--time SEC] [--iters N] "
                     "[--only=prefix[,..]] "
-                    "[--no-lat|--no-tput|--no-sem]\n", argv[0]);
+                    "[--no-lat|--no-tput|--no-b8|--no-sem]\n", argv[0]);
             exit(0);
         }
     }
@@ -613,7 +691,7 @@ void ib_init(int argc, char **argv)
  * 链接多个 .c, 需把这些定义迁入独立的 .c。 */
 double g_tput_sec = 0.5;
 unsigned long long g_lat_iters = 2000000;
-int g_do_lat = 1, g_do_tput = 1, g_do_sem = 1;
+int g_do_lat = 1, g_do_tput = 1, g_do_sem = 1, g_do_b8 = 1;
 const char *g_only = NULL;
 const char *g_abi = "x86_64", *g_os = "linux";
 
