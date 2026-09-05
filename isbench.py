@@ -44,10 +44,15 @@ CHECK_SENT = [("scalar", "x86_add_r64"), ("crypto", "aesenc")]
 CHECK_TOL = 0.10
 RAT_LO, RAT_HI = 85.0, 115.0
 
-# 探针单表 CSV 表头(26 列; kind=T 用例行 / kind=D 组尾行)
+# 探针单表 CSV 表头(29 列; kind=T 用例行 / kind=D 组尾行)。仅作导出列序模板与
+# 协议文档快照: 入库与库列补建已全动态(见 parse_seg/ingest), 探针未来加数据列
+# 不需登记本表, 导出时按库实列自动附尾。
+# block8_* = 连续8指令块(8 连独立链)执行时间 ns/块 + 稳定签名; 同指令同行不同列,
+# 只有注册了 b8 的用例填值, 其余行三列空 '-'。
 WIDE_HDR = ["kind", "group", "abi", "os", "bits", "tput_sec", "lat_iters",
             "case", "lat_st", "lat_ns", "lat_sig", "tput_st", "tput_ops",
-            "tput_mbs", "tput_sig", "sem_st", "sem_sig", "sem_tag",
+            "tput_mbs", "tput_sig", "block8_st", "block8_ns", "block8_sig",
+            "sem_st", "sem_sig", "sem_tag",
             "kat_st", "kat_det", "diag_st", "diag_v", "diag_u", "diag_det",
             "ok", "total"]
 
@@ -107,17 +112,16 @@ CREATE TABLE IF NOT EXISTS env_wide(
  %s);
 CREATE TABLE IF NOT EXISTS bench(
  run_id TEXT REFERENCES runs(key), abi TEXT, grp TEXT, cname TEXT,
- rep_n INT, lat_st TEXT, lat_ns REAL, lat_sig TEXT,
- tput_st TEXT, tput_ops REAL, tput_mbs REAL, tput_sig TEXT,
- sem_st TEXT, sem_sig TEXT, sem_tag TEXT,
- kat_st TEXT, kat_det TEXT,
- diag_st TEXT, diag_v REAL, diag_u TEXT, diag_det TEXT,
+ rep_n INT,
  PRIMARY KEY(run_id, abi, grp, cname));
+-- 度量列(探针输出槽)不定列: 首次入库按探针表头列名动态 ALTER 补列(见 ingest)。
 CREATE INDEX IF NOT EXISTS idx_bench_key ON bench(abi, grp, cname);
 CREATE INDEX IF NOT EXISTS idx_runs_mach ON runs(mode, hname);
 """ % (",\n ".join("%s TEXT" % c for c in ENV_COLS))
 
-# 各表列类型声明(与上方 SCHEMA 同源: 新增字段须两处同步)。
+# 表列类型声明(与上方 SCHEMA 同源; runs/env_wide 固定, 版本自愈按此补列)。
+# bench 仅主键/分组键固定: 度量列由 ingest 按探针表头列名动态补建(见 ingest),
+# 探针将来新增数据列无需在本文件登记。
 # 供 connect() 版本自愈: 旧库缺列时 ALTER TABLE ADD COLUMN 补齐。
 RUNS_T = {"key": "TEXT", "mode": "TEXT", "arch": "TEXT",
           "abi": "TEXT", "reps": "INT", "tsec": "REAL",
@@ -126,17 +130,12 @@ RUNS_T = {"key": "TEXT", "mode": "TEXT", "arch": "TEXT",
           "warm_discards": "INT", "check_note": "TEXT",
           "hname": "TEXT", "cpu_model": "TEXT", "ip": "TEXT"}
 ENV_T = dict((c, "TEXT") for c in ENV_COLS)
-BENCH_T = {"abi": "TEXT", "grp": "TEXT", "cname": "TEXT", "rep_n": "INT",
-           "lat_st": "TEXT", "lat_ns": "REAL", "lat_sig": "TEXT",
-           "tput_st": "TEXT", "tput_ops": "REAL", "tput_mbs": "REAL",
-           "tput_sig": "TEXT", "sem_st": "TEXT", "sem_sig": "TEXT",
-           "sem_tag": "TEXT", "kat_st": "TEXT", "kat_det": "TEXT",
-           "diag_st": "TEXT", "diag_v": "REAL", "diag_u": "TEXT",
-           "diag_det": "TEXT"}
+BENCH_T = {"abi": "TEXT", "grp": "TEXT", "cname": "TEXT", "rep_n": "INT"}
 TABLES = {"runs": RUNS_T, "env_wide": ENV_T, "bench": BENCH_T}
 
-# bench 固定列(run_id + 键 + 16 方式槽, 与 SCHEMA/INSERT 同步)
-BENCH_FIX = ["run_id", "abi", "grp", "cname", "rep_n"] + WIDE_HDR[8:24]
+# bench 固定列(仅主键/分组键): 度量列不定列, 由 ingest 按探针表头列名动态补建,
+# 故探针增加数据列无需同步本表与 SCHEMA
+BENCH_FIX = ["run_id", "abi", "grp", "cname", "rep_n"]
 BENCH_FIX_SET = set(BENCH_FIX)
 # 探针表头中非数据列(不参与值槽)
 META_COLS = {"kind", "group", "abi", "os", "bits", "tput_sec",
@@ -212,6 +211,26 @@ def ingest(conn, runf, env_vals, benches):
         conn.execute("INSERT INTO env_wide(run_id, %s) VALUES(?,%s)"
                      % (", ".join(cols), ",".join("?" * len(cols))),
                      [key] + [env_vals[c] for c in cols])
+        # 列自增(探针表头列名驱动): 预扫全量一次定列类型后统一补列,
+        # 数值列 REAL、其余 TEXT —— 新列无需在本脚本登记
+        dyn = {}
+        for b in benches:
+            src = dict(b)
+            src.update(b.get("extra") or {})   # push 传输兼容形态
+            for c2, v2 in src.items():
+                if (c2 in BENCH_FIX_SET or c2 == "extra" or v2 is None
+                        or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,30}",
+                                            c2)):
+                    continue
+                dyn.setdefault(c2, []).append(v2)
+        for c2 in sorted(dyn):
+            if c2 not in have:
+                col_t = "REAL" if all(fnum(v) is not None
+                                      for v in dyn[c2]) else "TEXT"
+                conn.execute("ALTER TABLE bench ADD COLUMN %s %s"
+                             % (c2, col_t))
+                have.add(c2)
+                eprint("== 列自增: bench 新增探针列 %s(%s)" % (c2, col_t))
         for b in benches:
             extra = dict()
             # 自增列来源两种形态: agg 收在 b["extra"], push/SELECT * 传输在顶层
@@ -223,11 +242,6 @@ def ingest(conn, runf, env_vals, benches):
                 if (c2 not in BENCH_FIX_SET and c2 != "extra"
                         and b.get(c2) is not None):
                     extra[c2] = b[c2]
-            for c2 in sorted(extra):
-                if c2 not in have:
-                    conn.execute("ALTER TABLE bench ADD COLUMN %s TEXT" % c2)
-                    have.add(c2)
-                    eprint("== 列自增: bench 新增探针列 %s" % c2)
             ins = BENCH_FIX + sorted(extra)
             vals = [key]
             for c in ins[1:]:
@@ -281,20 +295,22 @@ def list_runs(conn, mode=None, host=None):
     return conn.execute(q, a).fetchall()
 
 
-# ---------------- 探针输出解析(26 列宽行) ----------------
+# ---------------- 探针输出解析(单表宽 CSV, 列数动态: 以表头为准) ----------------
 
 def parse_seg(out):
     """解析一次 exec 的探针输出 = 单表宽 CSV:
-    1 表头(26 列) + N 行 kind=T(每 case 一行, 方式做列) + 1 行 kind=D。
-    版本容错: 表头缺列(旧探针)该槽按未测; 表头多列(未来探针)多余列
-    忽略——协议演进只加列, 新列由新版解析器认领, 旧版不崩不丢旧语义。
-    返回 (rows[], done_grp 或 None)。rows 元素含 cname 与各方式槽。"""
+    1 表头(29 列) + N 行 kind=T(每 case 一行, 方式做列) + 1 行 kind=D。
+    数据槽全动态: 行元素键 = 探针表头数据列名(META_COLS 之外, '-'/空 -> None),
+    无静态列清单 —— 探针新增数据列自动认领, 下游按列名通用聚合/落库。
+    返回 (rows[], done_grp 或 None)。rows 元素含 cname 与各列槽。"""
     rows, done = [], None
     rd = csv.reader(io.StringIO(out))
     first = next(rd, None)
     if not first or first[0].strip() != "kind":
         return rows, None
     idx = {name: i for i, name in enumerate(first)}
+    # 数据槽列 = 探针表头除元数据外全部列(动态认领, 不静态登记)
+    slots = sorted(cn for cn in idx if cn not in META_COLS and cn != "kind")
     for r in rd:
         if not r or not r[0]:
             continue
@@ -311,25 +327,10 @@ def parse_seg(out):
             cname = f("case") or ""
             if not cname:
                 continue          # 截断/异常行(无 case 名)直接丢弃
-            extra = {}            # 表头新增列(协议自增): 按列名保留
-            for cn in sorted(idx):
-                if cn in WIDE_HDR or cn == "kind":
-                    continue
-                v = f(cn)
-                if v is not None:
-                    extra[cn] = v
-            rows.append(dict(
-                abi=f("abi"), grp=f("group") or "", cname=cname,
-                lat_st=f("lat_st"), lat_ns=fnum(f("lat_ns")),
-                lat_sig=f("lat_sig"),
-                tput_st=f("tput_st"), tput_ops=fnum(f("tput_ops")),
-                tput_mbs=fnum(f("tput_mbs")), tput_sig=f("tput_sig"),
-                sem_st=f("sem_st"), sem_sig=f("sem_sig"),
-                sem_tag=f("sem_tag"),
-                kat_st=f("kat_st"), kat_det=f("kat_det"),
-                diag_st=f("diag_st"), diag_v=fnum(f("diag_v")),
-                diag_u=f("diag_u"), diag_det=f("diag_det"),
-                extra=extra))
+            row = dict(abi=f("abi"), grp=f("group") or "", cname=cname)
+            for cn in slots:      # 槽位恒建键(值保字符串, 数值化在聚合层)
+                row[cn] = f(cn)
+            rows.append(row)
         elif k == "D":
             done = f("group") or ""
     return rows, done
@@ -354,65 +355,58 @@ def agg_status(states):
 
 
 def agg_bench(rows, notes):
-    """同 (abi,grp,cname) 的多 rep 宽行 -> 一行聚合。返回 bench 行 dict。"""
+    """同 (abi,grp,cname) 的多 rep 宽行 -> 一行聚合。返回 bench 行 dict。
+    列全动态(键集 = 探针表头数据列, 见 parse_seg), 聚合规则按列名后缀启发:
+      *_st   状态列: 有 OK 取 OK(部分 rep 非 OK 记注记), 否则多数状态;
+      *_sig  签名列: 只取 OK rep 的唯一值(跨 rep 波动记注记);
+      数值列(*_ns/_ops/_mbs/_v, 与同前缀 *_st 同现时仅用其 OK rep): 取中位;
+      其余文本槽: 取 OK rep 首值(波动记注记)。
+    无有效值的槽(行不适合/全 CRASH): 不设键 -> 入库 NULL。"""
     b = dict(abi=rows[0]["abi"], grp=rows[0]["grp"], cname=rows[0]["cname"],
              rep_n=len(rows))
-    sigs = set(r["lat_sig"] for r in rows if r["lat_sig"])
-    okv = [r["lat_ns"] for r in rows if r["lat_st"] == "OK" and r["lat_ns"]]
-    b["lat_st"] = agg_status([r["lat_st"] for r in rows if r["lat_st"]])
-    b["lat_ns"] = median(okv)
-    b["lat_sig"] = next(iter(sigs), None)
-    if len(sigs) > 1:
-        notes.append("sig 波动: %s lat_sig=%s" % (b["cname"], sorted(sigs)))
-    if 0 < len([r for r in rows if r["lat_st"] == "OK"]) < len(rows):
-        notes.append("%s: 部分 rep CRASH/异常, lat 取 OK rep 中位" % b["cname"])
-    sigs = set(r["tput_sig"] for r in rows if r["tput_sig"])
-    okv = [r["tput_ops"] for r in rows
-           if r["tput_st"] == "OK" and r["tput_ops"]]
-    b["tput_st"] = agg_status([r["tput_st"] for r in rows if r["tput_st"]])
-    b["tput_ops"] = median(okv)
-    mbs = [r["tput_mbs"] for r in rows
-           if r["tput_st"] == "OK" and r["tput_mbs"]]
-    b["tput_mbs"] = median(mbs)
-    b["tput_sig"] = next(iter(sigs), None)
-    if len(sigs) > 1:
-        notes.append("%s tput_sig 波动" % b["cname"])
-    sigs = set(r["sem_sig"] for r in rows if r["sem_sig"])
-    b["sem_st"] = agg_status([r["sem_st"] for r in rows if r["sem_st"]])
-    b["sem_sig"] = next(iter(sigs), None)
-    b["sem_tag"] = next((r["sem_tag"] for r in rows if r["sem_tag"]), None)
-    if len(sigs) > 1:
-        notes.append("%s sem_sig 波动" % b["cname"])
-    b["kat_st"] = agg_status([r["kat_st"] for r in rows if r["kat_st"]])
-    b["kat_det"] = next((r["kat_det"] for r in rows if r["kat_det"]), None)
-    b["diag_st"] = agg_status([r["diag_st"] for r in rows if r["diag_st"]])
-    b["diag_u"] = next((r["diag_u"] for r in rows if r["diag_u"]), None)
-    b["diag_det"] = next((r["diag_det"] for r in rows if r["diag_det"]), None)
-    dv = [r["diag_v"] for r in rows if r["diag_st"] == "OK" and r["diag_v"]]
-    b["diag_v"] = median(dv)
-    # 未知新列(探针协议自增): 数值列取中位, 其余取首值; 波动记注记。
-    # 结果统一收进 b["extra"] 字典(ingest 按列自增落库)
-    keys = set()
+    cols = set()
     for r in rows:
-        keys.update((r.get("extra") or {}).keys())
-    if keys:
-        b["extra"] = {}
-    for kk in sorted(keys):
-        vals = [r["extra"][kk] for r in rows
-                if (r.get("extra") or {}).get(kk) is not None]
-        if not vals:
+        cols.update(r.keys())
+    numsuf = ("_ns", "_ops", "_mbs", "_v")
+
+    def st_of(c):              # 数值槽的同前缀状态列(无则 None)
+        for s in numsuf:
+            if c.endswith(s) and (c[:-len(s)] + "_st") in cols:
+                return c[:-len(s)] + "_st"
+        return None
+
+    def good_of(c):            # 有效 rep: 槽有值, 且(若有同前缀状态列)其状态为 OK
+        stc = st_of(c)
+        return [r for r in rows
+                if r.get(c) is not None
+                and (not stc or r.get(stc) == "OK")]
+
+    for ck in sorted(cols - {"abi", "grp", "cname"}):
+        if ck.endswith("_st"):
+            sts = [r[ck] for r in rows if r.get(ck)]
+            if not sts:
+                continue
+            b[ck] = agg_status(sts)
+            if len(set(sts)) > 1:
+                notes.append("%s: %s 部分 rep 非 OK [%s]" % (
+                    b["cname"], ck, ",".join(sorted(set(sts)))))
             continue
-        if len(set(vals)) == 1:
-            b["extra"][kk] = vals[0]
+        good = good_of(ck)
+        if not good:
             continue
-        nums = [fnum(v) for v in vals]
+        if ck.endswith("_sig"):
+            sv = sorted({r[ck] for r in good})
+            b[ck] = sv[0]
+            if len(sv) > 1:
+                notes.append("%s %s 波动" % (b["cname"], ck))
+            continue
+        nums = [fnum(r[ck]) for r in good]
         if all(x is not None for x in nums):
-            b["extra"][kk] = "%.6g" % median(nums)
-            notes.append("%s %s 波动, 取中位 %s" % (b["cname"], kk,
-                                                     b["extra"][kk]))
-        else:
-            b["extra"][kk] = vals[0]
-            notes.append("%s %s 波动, 取首值 %s" % (b["cname"], kk, vals[0]))
+            b[ck] = nums[0] if len(set(nums)) == 1 else median(nums)
+            continue
+        b[ck] = good[0][ck]
+        if len({r[ck] for r in good}) > 1:
+            notes.append("%s %s 波动, 取首值" % (b["cname"], ck))
     return b
 
 
@@ -658,6 +652,9 @@ def consistency_check(conn, runf, benches):
         (runf.get("hname"), runf.get("cpu_model"), runf["key"])).fetchone()
     if not prev:
         return "no-prev"
+    have = {d[1] for d in conn.execute("PRAGMA table_info(bench)")}
+    if "lat_st" not in have or "lat_ns" not in have:
+        return "no-prev"       # 库尚无 lat 列(动态建列): 无从对拍
     pk = prev[0]
     notes = []
     for g, c in CHECK_SENT:
@@ -826,14 +823,10 @@ def build_key(mode, arch, cpu_model, ip, ts):
 # ---------------- compare ----------------
 
 def load_run_bench(conn, key):
-    out = conn.execute(
-        "SELECT abi,grp,cname,lat_st,lat_ns,lat_sig,tput_st,tput_ops,"
-        "tput_sig,sem_st,sem_sig,kat_st,diag_st FROM bench WHERE run_id=?",
-        (key,)).fetchall()
-    return [dict(abi=r[0], grp=r[1], cname=r[2], lat_st=r[3], lat_ns=r[4],
-                 lat_sig=r[5], tput_st=r[6], tput_ops=r[7], tput_sig=r[8],
-                 sem_st=r[9], sem_sig=r[10], kat_st=r[11], diag_st=r[12])
-            for r in out]
+    """读 run 全部 bench 行(键 = 库实列, 全动态: 模板未含的新列自然带出)。"""
+    cur = conn.execute("SELECT * FROM bench WHERE run_id=?", (key,))
+    cols = [d[0] for d in cur.description]
+    return [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
 def sig_match(a, b):
@@ -855,6 +848,7 @@ def cmd_compare(args):
     # 逐方式对拍(lat/tput/sem/kat/diag 各自成一行明细)
     ways = [("lat", "lat_st", "lat_ns", "lat_sig"),
             ("tput", "tput_st", "tput_ops", "tput_sig"),
+            ("block8", "block8_st", "block8_ns", "block8_sig"),
             ("sem", "sem_st", None, "sem_sig"),
             ("kat", "kat_st", None, None),
             ("diag", "diag_st", None, None)]
@@ -870,7 +864,7 @@ def cmd_compare(args):
             miss_r += 1
             for wname, _, _, _ in ways:
                 t = ti[k]
-                if t[ways_st(wname)]:
+                if t.get(ways_st(wname)):
                     print("%-6s %-6s %-20s %-5s %-10s %s" % (
                         abi, g, k[1], wname, "MISSING-run", "-"))
             continue
@@ -908,7 +902,8 @@ def cmd_compare(args):
 
 
 def ways_st(wname):
-    return {"lat": "lat_st", "tput": "tput_st", "sem": "sem_st",
+    return {"lat": "lat_st", "tput": "tput_st",
+            "block8": "block8_st", "sem": "sem_st",
             "kat": "kat_st", "diag": "diag_st"}[wname]
 
 
@@ -1086,7 +1081,8 @@ def cmd_envdiff(args):
 
 
 def cmd_export(args):
-    """导出宽表 CSV: 表头 = 26 列协议 + 本 run 的自增列, xlsx 直接导入。"""
+    """导出宽表 CSV: 表头 = 协议模板列(WIDE_HDR) + 本 run 库中未登记的新列,
+    xlsx 直接导入。列不定: 库缺的协议槽与 DB 新列都自动处理。"""
     conn = connect(args.db)
     key = resolve_key(conn, args.run)
     if not key:
@@ -1096,23 +1092,26 @@ def cmd_export(args):
                        "ORDER BY grp,cname", (key,))
     pcols = [d[0] for d in cur.description]
     rows = cur.fetchall()
-    extras = [c for c in pcols if c not in BENCH_FIX_SET]
-    hdr = WIDE_HDR + extras
+    extras = [c for c in pcols
+              if c not in WIDE_HDR and c not in BENCH_FIX_SET]
     osn = "windows" if runf.get("mode") == "wine" else "linux"
     bits = "32" if runf.get("abi") == "i386" or \
         runf.get("arch") == "i386" else "64"
     tsec = "%g" % (runf.get("tsec") or 0)
     dash = "-"
     w = csv.writer(sys.stdout)
-    w.writerow(hdr)
+    w.writerow(WIDE_HDR + extras)
     for r in rows:
         d = dict(zip(pcols, r))
-        base = ["T", d["grp"], d["abi"], osn, bits, tsec, dash, d["cname"]]
-        for c in WIDE_HDR[8:24]:          # 16 方式槽
+        base = ["T", d["grp"] or "-", d["abi"] or "-", osn, bits,
+                tsec, dash, d["cname"] or "-"]
+        for c in WIDE_HDR[8:]:       # 协议数据槽(全序; ok/total 下接占位)
+            if c in ("ok", "total"):
+                continue
             v = d.get(c)
             base.append(dash if v is None else v)
-        base += [dash, dash]              # ok/total
-        for c in extras:                  # 自增列(含 NULL -> '-')
+        base += [dash, dash]         # ok/total
+        for c in extras:             # DB 新列(协议未登记, 含 NULL -> '-')
             v = d.get(c)
             base.append(dash if v is None else v)
         w.writerow(base)
