@@ -1,0 +1,48 @@
+# 行尾纪律: 本仓统一 LF(2026-09-10 定案, 见 README.txt 与 _tmp/b1c_syntax.sh)
+#
+# 为什么必须留这一份而不是只把文件转一次: 换一台 core.autocrlf=true 的机器
+# checkout, git 会把全仓翻回 CRLF —— 白做一次全仓 diff, 而且 b1c_syntax.sh 的
+# "CR 字节数必须为 0" 判据会当场红。行尾口径要靠仓库自身钉住, 不能靠每人记得设配置。
+#
+# 刻意**不写** `* text eol=lf`: 那是一条强制规则, 会连 dist/ 下无扩展名的静态 ELF
+# (如 dist/bin/alu_x86_64_linux)一起按文本转换 = 直接毁产物。这里改成
+# "声明哪些是文本 + 声明哪些绝不是文本", 两边都显式, 中间不留猜测空间。
+
+# --- 源码与脚本: 强制 LF ---
+*.c        text eol=lf
+*.h        text eol=lf
+*.s        text eol=lf
+*.S        text eol=lf
+*.py       text eol=lf
+*.sh       text eol=lf
+*.ps1      text eol=lf
+*.bat      text eol=lf
+*.txt      text eol=lf
+*.md       text eol=lf
+*.csv      text eol=lf
+*.json     text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# --- 产物与二进制: 禁止任何行尾处理 ---
+# (git 只认 -text / text / text=auto 这几种写法, 没有 "-binary" 这个值; 写成
+#  不存在的属性 = 默默不生效, 所以这里统一用 -text)
+dist/**    -text
+*.exe      -text
+*.dll      -text
+*.a        -text
+*.o        -text
+*.obj      -text
+*.lib      -text
+*.elf      -text
+*.deb      -text
+*.tar      -text
+*.tgz      -text
+*.gz       -text
+*.zip      -text
+*.png      -text
+*.jpg      -text
+*.gif      -text
+*.etl      -text
+*.cab      -text
+*.7z       -text

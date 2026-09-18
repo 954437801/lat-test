@@ -1,14 +1,16 @@
 /* isb_crypto.c —— isbench 组4: AES-NI / PCLMUL / SHA 加密族
  *
- * 迁移来源: aes_kat.c 全量(FIPS-197 KAT keygen/enc/dec + 依赖链 + 8 链吞吐 +
- *           ECB 块负载), insn_probe.c aesenc/aesdec/pclmulqdq/sha256rnds2 段。
- * 输出契约: kat 三例走 ib_kat(PASS/FAIL + detail); 其余 lat/tput 双内核;
- *           ECB 每「op」= 256 块×16B 一轮, bpop=4096 -> v2=MB/s 与 legacy
- *           ECB_MBPS 同口径直接可比。
+ * 迁移来源: aes_kat.c(FIPS-197 KAT keygen/enc/dec + 依赖链 + 8 链吞吐),
+ *           insn_probe.c aesenc/aesdec/pclmulqdq/sha256rnds2 段。
+ * 去重(功能测试标准 §5.1): aes_ecb128 块负载已删 —— 它与 ossl 探针的 aes-128-ecb
+ *           观测面重叠且 ossl 是真实库实现, 库级 ECB 归 ossl; 本组只留“单指令”延迟/吞吐。
+ * 输出契约: kat 三例走 ib_kat(PASS/FAIL + detail); 其余 lat/tput 双内核。
  * 编码纪律: target("aes"/"pclmul"/"sha") 单启 -> legacy 66 0F 38 编码
  *           (忠实 32 位 libcef); 密钥经全局 g_rk 运行时展开, 链不可闭式折叠。
  */
-#include "ib.h"
+#include "ib_core.h"
+#include "ib_buf.h"          /* KAT 输入推导(IB_KIN8) */
+#include "isb_crypto_kat.h"  /* KAT 真值表(采集后生成; 未取数时全 UNSET) */
 
 /* FIPS-197 例: key=000102..0f, pt=001122..ff, ct(enc 结果) */
 static const unsigned char KAT_KEY[16] = {
@@ -25,8 +27,6 @@ static const unsigned char KAT_CT[16] = {
 };
 static __m128i g_rk[11];                 /* 运行时展开: 编译器不可常数化 */
 static unsigned char g_out[16];
-static unsigned char g_ecb[256 * 16];    /* 4 KiB ECB 结果缓冲(每次调用全量覆盖写) */
-static unsigned char g_ecb_src[256 * 16];  /* ECB 只读明文源(KAT_PT 铺满, 与结果区分离) */
 
 __attribute__((target("aes"))) static __m128i key_expand_step(__m128i key, __m128i gen)
 {
@@ -56,17 +56,6 @@ __attribute__((target("aes"))) static void aes128_expand_dec(void)
     int i;
     for (i = 1; i < 10; i++)
         g_rk[i] = _mm_aesimc_si128(g_rk[i]);
-}
-static uint64_t sig_mem(const void *p, int n)
-{
-    const unsigned char *b = (const unsigned char *)p;
-    uint64_t h = 1469598103934665603ULL;   /* FNV-1a(内存摘要, 与缓冲内容绑定) */
-    int i;
-    for (i = 0; i < n; i++) {
-        h ^= b[i];
-        h *= 1099511628211ULL;
-    }
-    return h;
 }
 
 /* ==================== FIPS-197 KAT(自检: 展开/加密/解密) ==================== */
@@ -154,30 +143,6 @@ __attribute__((target("aes"))) static uint64_t k_aesdec_tp(unsigned long long it
     }
 }
 
-/* ==================== ECB-128 真实块负载(256 块=4KiB/轮; bpop=4096) ====================
- * 输入 = g_ecb_src[b] ^ tw(p): 轮序扰动 tw 依赖 p, 编译器不能把加密不变式外提出
- * p 循环(否则 tput 工作量不随 iters 增长 -> 假数据); 密文覆盖写 g_ecb 且不读回
- * (无跨轮链) -> 结果区终点只依赖末轮 -> 窗口后固定 4096 调用的签名确定可复现。 */
-__attribute__((target("aes"))) static uint64_t k_ecb128(unsigned long long iters)
-{
-    unsigned long long p, b;
-    int r;
-    for (p = 0; p < iters; p++) {
-        uint32_t w = (uint32_t)(p * 2654435761u + 0x9e3779b9u);
-        __m128i tw = _mm_set1_epi32((int)w);
-        for (b = 0; b < 256; b++) {
-            __m128i x = _mm_loadu_si128((const __m128i *)(g_ecb_src + b * 16));
-            x = _mm_xor_si128(x, tw);
-            x = _mm_xor_si128(x, g_rk[0]);
-            for (r = 1; r < 10; r++)
-                x = _mm_aesenc_si128(x, g_rk[r]);
-            x = _mm_aesenclast_si128(x, g_rk[10]);
-            _mm_storeu_si128((__m128i *)(g_ecb + b * 16), x);
-        }
-    }
-    return sig_mem(g_ecb, 4096);
-}
-
 /* ==================== PCLMULQDQ(target="pclmul") ==================== */
 __attribute__((target("pclmul"))) static uint64_t k_pclmulqdq(unsigned long long iters)
 {
@@ -247,19 +212,68 @@ static void run_kat(const char *grp, const char *name, ib_fn f)
 
 /* ---------------- 用例表(名字首段=ISA 段; aesenc/aesdec/pclmulqdq/sha256rnds2
  * 原名首段即 ISA 不叠加, 仅 ecb128 补 aes_ 前缀) ---------------- */
+/* ---------------- KAT 探针(每词干一条) ----------------
+ * 口径: 输入由词干哈希重导; a = (i0,i1), b = (i1, rotl(i0,13)) —— 与 vec/sse
+ * 的 VIN/VIN2 同构但独立各写一遍。128 位输出 -> o0,o1; 整数/SIMD 族不碰
+ * EFLAGS -> outf = 0。sha256rnds2 吃三个操作数(隐含 XMM0 传 msg), 只余 4 个
+ * 输入字, 故 msg 由 abcd^efgh 导出(abcd=(i0,i1), efgh=(i2,i3))。 */
+#define RB64(x, n)    (((x) >> (n)) | ((x) << (64 - (n))))
+#define CR_A(sn, kk)  _mm_set_epi64x((long long)IB_KIN8(sn, kk, 1, uint64_t), \
+                                     (long long)IB_KIN8(sn, kk, 0, uint64_t))
+#define CR_B(sn, kk)  _mm_set_epi64x((long long)RB64(IB_KIN8(sn, kk, 0, uint64_t), 13), \
+                                     (long long)IB_KIN8(sn, kk, 1, uint64_t))
+#define CR_IN(sn, kk)  (g->i0 = IB_KIN8(sn, kk, 0, uint64_t), \
+                        g->i1 = IB_KIN8(sn, kk, 1, uint64_t), g->inf = 0)
+#define CR_OUT(r)  do { union { __m128i v_; uint64_t q[2]; } u_; u_.v_ = (r); \
+                        g->o0 = u_.q[0]; g->o1 = u_.q[1]; g->outf = 0; } while (0)
+
+__attribute__((target("aes"))) static void k_aesenc_kat(int kk, ib_kv *g)
+{
+    __m128i a = CR_A("aesenc", kk), b = CR_B("aesenc", kk);
+    CR_IN("aesenc", kk);
+    CR_OUT(_mm_aesenc_si128(a, b));
+}
+__attribute__((target("aes"))) static void k_aesdec_kat(int kk, ib_kv *g)
+{
+    __m128i a = CR_A("aesdec", kk), b = CR_B("aesdec", kk);
+    CR_IN("aesdec", kk);
+    CR_OUT(_mm_aesdec_si128(a, b));
+}
+__attribute__((target("pclmul"))) static void k_pclmulqdq_kat(int kk, ib_kv *g)
+{
+    __m128i a = CR_A("pclmulqdq", kk), b = CR_B("pclmulqdq", kk);
+    CR_IN("pclmulqdq", kk);
+    CR_OUT(_mm_clmulepi64_si128(a, b, 0x00));
+}
+__attribute__((target("sha"))) static void k_sha256rnds2_kat(int kk, ib_kv *g)
+{
+    __m128i abcd = _mm_set_epi64x((long long)IB_KIN8("sha256rnds2", kk, 1, uint64_t),
+                                  (long long)IB_KIN8("sha256rnds2", kk, 0, uint64_t));
+    __m128i efgh = _mm_set_epi64x((long long)IB_KIN8("sha256rnds2", kk, 3, uint64_t),
+                                  (long long)IB_KIN8("sha256rnds2", kk, 2, uint64_t));
+    __m128i msg = _mm_xor_si128(abcd, efgh);
+    g->i0 = IB_KIN8("sha256rnds2", kk, 0, uint64_t);
+    g->i1 = IB_KIN8("sha256rnds2", kk, 1, uint64_t);
+    g->i2 = IB_KIN8("sha256rnds2", kk, 2, uint64_t);
+    g->i3 = IB_KIN8("sha256rnds2", kk, 3, uint64_t);
+    g->inf = 0;
+    CR_OUT(_mm_sha256rnds2_epu32(abcd, efgh, msg));
+}
+
 static const ib_case g_cases[] = {
-    { "aesenc",      "aes",    k_aesenc,       k_aesenc_tp,      0, NULL, 0 },
-    { "aesdec",      "aes",    k_aesdec,       k_aesdec_tp,      0, NULL, 0 },
-    { "aes_ecb128",  "aes",    0,              k_ecb128,         0, NULL, 4096 },
-    { "pclmulqdq",   "pclmul", k_pclmulqdq,    k_pclmulqdq_tp,   0, NULL, 0 },
-    { "sha256rnds2", "sha",    k_sha256rnds2,  k_sha256rnds2_tp, 0, NULL, 0 },
+    { "aesenc", "aes", k_aesenc, k_aesenc_tp, 0, NULL, 0, NULL, 0,
+      k_aesenc_kat, IB_KAT_aesenc, "aesenc" },
+    { "aesdec", "aes", k_aesdec, k_aesdec_tp, 0, NULL, 0, NULL, 0,
+      k_aesdec_kat, IB_KAT_aesdec, "aesdec" },
+    { "pclmulqdq", "pclmul", k_pclmulqdq, k_pclmulqdq_tp, 0, NULL, 0, NULL, 0,
+      k_pclmulqdq_kat, IB_KAT_pclmulqdq, "pclmulqdq" },
+    { "sha256rnds2", "sha", k_sha256rnds2, k_sha256rnds2_tp, 0, NULL, 0, NULL, 0,
+      k_sha256rnds2_kat, IB_KAT_sha256rnds2, "sha256rnds2" },
 };
 #define NCASES ((int)(sizeof(g_cases) / sizeof(g_cases[0])))
 
 int main(int argc, char **argv)
 {
-    int i;
-    for (i = 0; i < 256; i++) memcpy(g_ecb_src + i * 16, KAT_PT, 16);
     ib_init(argc, argv);
     ib_hdr("crypto", NCASES);
     run_kat("crypto", "aes128_keygen_kat", kat_keygen);

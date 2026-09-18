@@ -4,7 +4,7 @@
  * 冷启动首次 cpuid 必须在任何 cpuid 之前测(含翻译器/运行库冷初始化摊分);
  * 能力位判定复用 ib_cpu_ok(ib.h, GNU asm cpuid, mingw/Linux 通用)。
  */
-#include "ib.h"
+#include "ib_core.h"
 
 static const char *g_caps[] = {
     "sse", "sse2", "sse3", "ssse3", "sse4.1", "sse4.2", "popcnt", "movbe",
@@ -49,9 +49,9 @@ int main(int argc, char **argv)
     /* 冷启动首次 cpuid(进程内第一个 cpuid; 翻译器初始化摊分在内) */
     {
         unsigned a, b, c, d;
-        double t0 = ib_now();
+        uint64_t t0 = ib_now();
         ib_cpuid(0, 0, &a, &b, &c, &d);
-        snprintf(nb, sizeof nb, "%.1f", ib_now() - t0);
+        snprintf(nb, sizeof nb, "%.1f", (double)(ib_now() - t0));
         snprintf(dt, sizeof dt, "leaf0max=%u", a);
         ib_out("cpuid", "first_call", "diag", "OK", nb, "ns", "-", "-", "-", dt);
     }

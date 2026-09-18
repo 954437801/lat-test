@@ -19,3 +19,8 @@ compile_commands.json
 .ccls_cache/
 .cache/
 /dist/
+_*
+*.tar.gz
+*.db
+*.backup
+tmp

@@ -5,12 +5,12 @@
  * 输出: 全 diag 行 —— 进程内首个时钟读(冷)、时钟单次开销、连续读间隔抖动统计。
  * 启动(exec->main)墙钟由 run.sh 记录首行输出时刻, 与本组 first_read 呼应。
  */
-#include "ib.h"
+#include "ib_core.h"
 
 int main(int argc, char **argv)
 {
     enum { N = 200000, NJ = 20000 };
-    double t0, t1, el, mn, mx, sum;
+    uint64_t t0, t1, el, mn, mx, sum;   /* 时间量整数纳秒(仅输出处转 double) */
     unsigned long long i;
     char a[64], b[64], c[64];
 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     /* 冷: 进程内首次时钟读的代价(首次 syscall/vDSO 或翻译器时钟桥初始化摊分) */
     t0 = ib_now();
     t1 = ib_now();
-    snprintf(a, sizeof a, "%.1f", t1 - t0);
+    snprintf(a, sizeof a, "%.1f", (double)(t1 - t0));
     ib_out("timer", "first_read", "diag", "OK", a, "ns", "-", "-", "-",
            "gap-to-second-read");
 
@@ -29,11 +29,11 @@ int main(int argc, char **argv)
     for (i = 0; i < N; i++)
         (void)ib_now();
     el = ib_now() - t0;
-    snprintf(a, sizeof a, "%.2f", el / (double)N);
-    ib_diag("timer", "now_overhead", "OK", el / (double)N, "ns/op", "-");
+    snprintf(a, sizeof a, "%.2f", (double)el / (double)N);
+    ib_diag("timer", "now_overhead", "OK", (double)el / (double)N, "ns/op", "-");
 
     /* 一致性: 相邻读间隔的 min/avg/max(粗粒度或跳变会放大 max) */
-    mn = 1e300; mx = 0; sum = 0;
+    mn = (uint64_t)-1; mx = 0; sum = 0;   /* 整数纳秒: 不用 1e300 这种浮点哨兵 */
     t0 = ib_now();
     for (i = 0; i < NJ; i++) {
         t1 = ib_now();
@@ -43,17 +43,17 @@ int main(int argc, char **argv)
         if (el > mx) mx = el;
         sum += el;
     }
-    snprintf(a, sizeof a, "%.1f", mn);
-    ib_diag("timer", "read_gap_min", "OK", mn, "ns", a);
-    snprintf(a, sizeof a, "%.1f", sum / (double)NJ);
-    ib_diag("timer", "read_gap_avg", "OK", sum / (double)NJ, "ns", a);
-    snprintf(a, sizeof a, "%.1f", mx);
-    ib_diag("timer", "read_gap_max", "OK", mx, "ns", a);
+    snprintf(a, sizeof a, "%.1f", (double)mn);
+    ib_diag("timer", "read_gap_min", "OK", (double)mn, "ns", a);
+    snprintf(a, sizeof a, "%.1f", (double)sum / (double)NJ);
+    ib_diag("timer", "read_gap_avg", "OK", (double)sum / (double)NJ, "ns", a);
+    snprintf(a, sizeof a, "%.1f", (double)mx);
+    ib_diag("timer", "read_gap_max", "OK", (double)mx, "ns", a);
 
     /* 生命周记时: 到 main 尾部的单调时间(进程驻留, 与 run.sh wall 对照) */
     t0 = ib_now();
-    snprintf(a, sizeof a, "%.3f", t0 / 1e6);
-    ib_diag("timer", "uptime_at_exit", "OK", t0 / 1e6, "ms", "-");
+    snprintf(a, sizeof a, "%.3f", (double)t0 / 1e6);
+    ib_diag("timer", "uptime_at_exit", "OK", (double)t0 / 1e6, "ms", "-");
 
     ib_done("timer", 5, 5);
     (void)argc; (void)b; (void)c;

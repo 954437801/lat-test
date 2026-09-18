@@ -9,7 +9,9 @@
  * 编码纪律: 本组整体构建 flags 不带 -mavx*; crc32/popcnt/lzcnt 由
  * __attribute__((target(...))) 单函数发射; bsr/bsf 用内联 asm 钉死编码。
  */
-#include "ib.h"
+#include "ib_core.h"
+#include "ib_buf.h"           /* KAT 输入推导(IB_KIN8/IB_KFL)与标志注入(IB_SETF/IB_GETF) */
+#include "isb_scalar_kat.h"   /* KAT 真值表(采集后生成; 未取数时全 UNSET) */
 
 /* ---------------- add_r64: 延迟参考下限 ----------------
  * 线性递推 a+=b 会被 GCC 闭式折叠(实测 0.00 ns/op), 用 asm 钉死依赖链。 */
@@ -167,139 +169,57 @@ static uint64_t k_crc32_tp(unsigned long long iters)
     return (uint64_t)a ^ ((uint64_t)b << 16) ^ ((uint64_t)c << 32) ^ ((uint64_t)d << 48);
 }
 
-/* ---------------- popcnt ---------------- */
-__attribute__((target("popcnt")))
-static uint64_t k_popcnt(unsigned long long iters)
+/* popcnt / lzcnt / bsr / bsf 已从本组删除(归 bits 组, 去重口径见 功能测试标准.md §5.2):
+ * 位扫描/位操纵本就是 bits 的定位, 本组只留"标量整数基线"(add/mul) + crc32。 */
+
+/* ---------------- KAT 探针(每词干一条) ----------------
+ * 口径: 输入由词干哈希重导(甲=i0, 乙=i1), 只执行 1 次不进循环; 判定只比 o0..o3+outf。
+ * 宽度固定取 32 位 —— 计时内核随 ABI 自适应宽度(x64 走 64 位, i386 走 32 位),
+ * 但真值表两 ABI 共用, 故 KAT 用与 ABI 无关的定宽形式(同 cc 组), i386 与
+ * x86_64 同表同值; 想审 64 位形态交给 alu 组的 add/mul 专条。
+ * add: o0 = 和, outf = 全状态位;  mul: o0 = 积(截断), outf = CF/OF(其余未定义);
+ * crc32: o0 = crc32(甲,乙), 架构上不碰 EFLAGS -> outf = 0。 */
+static void k_add_r64_kat(int kk, ib_kv *g)
 {
-    uint32_t k = 0x12345678u;
-    uint64_t acc = 0;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        k = k * 2654435761u + 1u;
-        acc += (uint32_t)__builtin_popcount(k);
-    }
-    return acc;
+    IB_UL a = (IB_UL)IB_KIN8("add_r64", kk, 0, IB_UL),
+          b = (IB_UL)IB_KIN8("add_r64", kk, 1, IB_UL);
+    IB_UL ain = a;
+    uintptr_t fv = (uintptr_t)IB_KFL("add_r64", kk), fl = 0;
+    __asm__ volatile(IB_SETF "addl %[b],%[a]" IB_GETF
+                    : [a] "+r"(a), [fl] "=&r"(fl)
+                    : [b] "r"(b), [fv] "r"(fv) : "cc", "memory");
+    g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b; g->inf = (uint64_t)fv;
+    g->o0 = (uint64_t)a; g->o1 = 0; g->outf = (uint64_t)fl & IB_FLG_MASK;
 }
-__attribute__((target("popcnt")))
-static uint64_t k_popcnt_tp(unsigned long long iters)
+static void k_mul_r64_kat(int kk, ib_kv *g)
 {
-    uint32_t k1 = 0x12345678u, k2 = 0x23456789u, k3 = 0x3456789au, k4 = 0x456789abu;
-    uint64_t acc = 0;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        k1 = k1 * 2654435761u + 1u;
-        k2 = k2 * 2654435761u + 1u;
-        k3 = k3 * 2654435761u + 1u;
-        k4 = k4 * 2654435761u + 1u;
-        acc += (uint32_t)__builtin_popcount(k1);
-        acc += (uint32_t)__builtin_popcount(k2);
-        acc += (uint32_t)__builtin_popcount(k3);
-        acc += (uint32_t)__builtin_popcount(k4);
-    }
-    return acc;
+    IB_UL a = (IB_UL)IB_KIN8("mul_r64", kk, 0, IB_UL),
+          b = (IB_UL)IB_KIN8("mul_r64", kk, 1, IB_UL);
+    IB_UL ain = a;
+    uintptr_t fv = (uintptr_t)IB_KFL("mul_r64", kk), fl = 0;
+    __asm__ volatile(IB_SETF "imull %[b],%[a]" IB_GETF
+                    : [a] "+r"(a), [fl] "=&r"(fl)
+                    : [b] "r"(b), [fv] "r"(fv) : "cc", "memory");
+    g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b; g->inf = (uint64_t)fv;
+    g->o0 = (uint64_t)a; g->o1 = 0; g->outf = (uint64_t)fl & (IB_FLG_MASK_CFOF);
+}
+__attribute__((target("sse4.2"))) static void k_crc32_kat(int kk, ib_kv *g)
+{
+    IB_UL a = (IB_UL)IB_KIN8("crc32", kk, 0, IB_UL),
+          b = (IB_UL)IB_KIN8("crc32", kk, 1, IB_UL);
+    IB_UL ain = a;
+    __asm__ volatile("crc32l %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");
+    g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b; g->inf = 0;
+    g->o0 = (uint64_t)a; g->o1 = 0; g->outf = 0;
 }
 
-/* ---------------- lzcnt(ABM): 同 popcnt 混合链 ---------------- */
-__attribute__((target("lzcnt")))
-static uint64_t k_lzcnt(unsigned long long iters)
-{
-    uint32_t k = 0x80000001u;   /* 非 0 种子 */
-    uint64_t acc = 0;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        k = k * 2654435761u + 1u;
-        acc += _lzcnt_u32(k ? k : 1u);   /* lzcnt(0)=32 亦确定, 保底仅防 __builtin 语义差 */
-    }
-    return acc;
-}
-__attribute__((target("lzcnt")))
-static uint64_t k_lzcnt_tp(unsigned long long iters)
-{
-    uint32_t k1 = 0x80000001u, k2 = 0x80000003u, k3 = 0x80000005u, k4 = 0x80000007u;
-    uint64_t acc = 0;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        k1 = k1 * 2654435761u + 1u;
-        k2 = k2 * 2654435761u + 1u;
-        k3 = k3 * 2654435761u + 1u;
-        k4 = k4 * 2654435761u + 1u;
-        acc += _lzcnt_u32(k1 ? k1 : 1u);
-        acc += _lzcnt_u32(k2 ? k2 : 1u);
-        acc += _lzcnt_u32(k3 ? k3 : 1u);
-        acc += _lzcnt_u32(k4 ? k4 : 1u);
-    }
-    return acc;
-}
-
-/* ---------------- bsr / bsf: 真延迟链(x->bit scan->x), asm 钉 32 位编码 ---------------- */
-static uint64_t k_bsr(unsigned long long iters)
-{
-    uint32_t x = 0x80000001u;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        uint32_t t;
-        __asm__("bsrl %1,%0" : "=r"(t) : "r"(x));
-        x = ((x << 1) ^ t) | 1u;   /* 非 0 保持; 链经 bsr */
-    }
-    return x;
-}
-static uint64_t k_bsr_tp(unsigned long long iters)
-{
-    uint32_t x = 0x80000001u, y = 0x40000003u, z = 0x20000005u, w = 0x10000007u;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        uint32_t t;
-        __asm__("bsrl %1,%0" : "=r"(t) : "r"(x));
-        x = ((x << 1) ^ t) | 1u;
-        __asm__("bsrl %1,%0" : "=r"(t) : "r"(y));
-        y = ((y << 1) ^ t) | 1u;
-        __asm__("bsrl %1,%0" : "=r"(t) : "r"(z));
-        z = ((z << 1) ^ t) | 1u;
-        __asm__("bsrl %1,%0" : "=r"(t) : "r"(w));
-        w = ((w << 1) ^ t) | 1u;
-    }
-    return (uint64_t)x ^ ((uint64_t)y << 16) ^ ((uint64_t)z << 32) ^ ((uint64_t)w << 48);
-}
-static uint64_t k_bsf(unsigned long long iters)
-{
-    uint32_t x = 0x80000001u;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        uint32_t t;
-        __asm__("bsfl %1,%0" : "=r"(t) : "r"(x));
-        x = ((x << 1) ^ t) | 1u;
-    }
-    return x;
-}
-static uint64_t k_bsf_tp(unsigned long long iters)
-{
-    uint32_t x = 0x80000001u, y = 0x40000003u, z = 0x20000005u, w = 0x10000007u;
-    unsigned long long i;
-    for (i = 0; i < iters; i++) {
-        uint32_t t;
-        __asm__("bsfl %1,%0" : "=r"(t) : "r"(x));
-        x = ((x << 1) ^ t) | 1u;
-        __asm__("bsfl %1,%0" : "=r"(t) : "r"(y));
-        y = ((y << 1) ^ t) | 1u;
-        __asm__("bsfl %1,%0" : "=r"(t) : "r"(z));
-        z = ((z << 1) ^ t) | 1u;
-        __asm__("bsfl %1,%0" : "=r"(t) : "r"(w));
-        w = ((w << 1) ^ t) | 1u;
-    }
-    return (uint64_t)x ^ ((uint64_t)y << 16) ^ ((uint64_t)z << 32) ^ ((uint64_t)w << 48);
-}
-
-/* ---------------- 用例表(声明式; 名字首段=ISA 段: x86 基线/sse42/popcnt/abm;
- * 原名首段即能力名者(popcnt)不叠加; cap 空 = 恒支持) ---------------- */
 static const ib_case g_cases[] = {
-    { "x86_add_r64", NULL,        k_add_r64,      k_add_r64_tp, 0, NULL, 0,
-      k_add_r64_b8 },
-    { "x86_mul_r64", NULL,        k_mul_r64,   k_mul_r64_tp,  0 },
-    { "sse42_crc32", "sse4.2",    k_crc32,     k_crc32_tp,    0 },
-    { "popcnt",      "popcnt",    k_popcnt,    k_popcnt_tp,   0 },
-    { "abm_lzcnt",   "abm",       k_lzcnt,     k_lzcnt_tp,    0 },
-    { "x86_bsr",     NULL,        k_bsr,       k_bsr_tp,      0 },
-    { "x86_bsf",     NULL,        k_bsf,       k_bsf_tp,      0 },
+    { "x86_add_r64", NULL, k_add_r64, k_add_r64_tp, 0, NULL, 0, k_add_r64_b8, 0,
+      k_add_r64_kat, IB_KAT_add_r64, "add_r64" },
+    { "x86_mul_r64", NULL, k_mul_r64, k_mul_r64_tp, 0, NULL, 0, NULL, 0,
+      k_mul_r64_kat, IB_KAT_mul_r64, "mul_r64" },
+    { "sse42_crc32", "sse4.2", k_crc32, k_crc32_tp, 0, NULL, 0, NULL, 0,
+      k_crc32_kat, IB_KAT_crc32, "crc32" },
 };
 #define NCASES ((int)(sizeof(g_cases) / sizeof(g_cases[0])))
 

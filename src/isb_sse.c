@@ -18,7 +18,9 @@
  *   5) 签名收敛(不动点/同址)的用例 tput 物理合理即真执行, 勿仅凭 SAME 判假;
  *      自检手段: 不同 --iters 双跑, 签名变 = 真依赖链(见冒烟脚本)。
  */
-#include "ib.h"
+#include "ib_core.h"
+#include "ib_buf.h"        /* KAT 输入推导(IB_KIN8) */
+#include "isb_sse_kat.h"   /* KAT 真值表(采集后生成; 未取数时全 UNSET) */
 
 static float    g_fbuf[64] __attribute__((aligned(64)));
 static double   g_dbuf[32] __attribute__((aligned(64)));
@@ -319,7 +321,8 @@ __attribute__((target("ssse3"))) static uint64_t k_lddqu_tp(unsigned long long i
     return ib_sig128(s0)^ib_sig128(s1)^ib_sig128(s2)^ib_sig128(s3); }
 __attribute__((target("ssse3"))) static uint64_t k_pshufb(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x0102030405060708ULL);
     int k=0; unsigned long long i;
-    for(i=0;i<iters;i++) a=_mm_shuffle_epi8(a,wrot(&k)); return ib_sig128(a); }
+    for(i=0;i<iters;i++) a=_mm_shuffle_epi8(a,wrot(&k));
+    return ib_sig128(a); }
 __attribute__((target("ssse3"))) static uint64_t k_pshufb_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x0102030405060708ULL),
     b=_mm_set1_epi64x(0x1112131415161718ULL),c=_mm_set1_epi64x(0x2122232425262728ULL),
     d=_mm_set1_epi64x(0x3132333435363738ULL); int k=0; unsigned long long i;
@@ -328,7 +331,8 @@ __attribute__((target("ssse3"))) static uint64_t k_pshufb_tp(unsigned long long 
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 __attribute__((target("ssse3"))) static uint64_t k_pmaddubsw(unsigned long long iters){ __m128i a=_mm_set1_epi16(0x0201); int k=0;
     unsigned long long i;
-    for(i=0;i<iters;i++) a=_mm_maddubs_epi16(a,wrot(&k)); return ib_sig128(a); }
+    for(i=0;i<iters;i++) a=_mm_maddubs_epi16(a,wrot(&k));
+    return ib_sig128(a); }
 __attribute__((target("ssse3"))) static uint64_t k_pmaddubsw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16(0x0201),
     b=_mm_set1_epi16(0x0403),c=_mm_set1_epi16(0x0605),d=_mm_set1_epi16(0x0807); int k=0;
     unsigned long long i;
@@ -337,7 +341,8 @@ __attribute__((target("ssse3"))) static uint64_t k_pmaddubsw_tp(unsigned long lo
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 __attribute__((target("ssse3"))) static uint64_t k_pmulhrsw(unsigned long long iters){ __m128i a=_mm_set1_epi16(0x0102); int k=0;
     unsigned long long i;
-    for(i=0;i<iters;i++) a=_mm_mulhrs_epi16(a,wrot(&k)); return ib_sig128(a); }
+    for(i=0;i<iters;i++) a=_mm_mulhrs_epi16(a,wrot(&k));
+    return ib_sig128(a); }
 __attribute__((target("ssse3"))) static uint64_t k_pmulhrsw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16(0x0102),
     b=_mm_set1_epi16(0x0304),c=_mm_set1_epi16(0x0506),d=_mm_set1_epi16(0x0708); int k=0;
     unsigned long long i;
@@ -422,155 +427,213 @@ __attribute__((target("sse4.2"))) static uint64_t k_pcmpeqq_tp(unsigned long lon
         a=_mm_cmpeq_epi64(a,w); b=_mm_cmpeq_epi64(b,w); c=_mm_cmpeq_epi64(c,w); d=_mm_cmpeq_epi64(d,w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 
-/* ============ R4_SEM 语义对拍(不计时; rows 取自 insn_probe.c R4_SEM, 结果折 64 位签名) ============
- * 折叠: acc=(acc<<7)|(acc>>57); acc^=sig128(FN(a,k)) —— 与 legacy 同式, 逐位跨机可比。 */
-__attribute__((target("ssse3"))) static uint64_t k_pshufb_sem(unsigned long long it)
-{
-    (void)it;
-    static const unsigned long long rows[][4] = {
-        {0x100f0e0d0c0b0a09ULL, 0x0807060504030201ULL, 0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL},
-        {0x0f0e0d0c0b0a0908ULL, 0xffefd0c0b0a09080ULL, 0x8f8e8d8c8b8a8988ULL, 0x8786858483828180ULL},
-        {0x0001020304050607ULL, 0xf8e0d0c0b0a09080ULL, 0x403f2e0d7c1b9a18ULL, 0x0706850403820180ULL},
-        {0x8081828384858687ULL, 0x88898a8b8c8d8e8fULL, 0x7f7f7f7f7f7f7f7fULL, 0x1f1f1f1f1f1f1f1fULL},
-        {0xffffffffffffffffULL, 0xffffffffffffffffULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL},
-        {0x55aa55aa55aa55aaULL, 0xaaaaaaaaaaaaaaaaULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL},
-        {0x0000000000000000ULL, 0x0000000000000000ULL, 0x8080808080808080ULL, 0x8080808080808080ULL},
-    };
-    unsigned i, np = (unsigned)(sizeof(rows) / sizeof(rows[0]));
-    uint64_t acc = 0;
-    for (i = 0; i < np; i++) {
-        __m128i a = _mm_set_epi64x((long long)rows[i][0], (long long)rows[i][1]);
-        __m128i k = _mm_set_epi64x((long long)rows[i][2], (long long)rows[i][3]);
-        acc = (acc << 7) | (acc >> 57); acc ^= ib_sig128(_mm_shuffle_epi8(a, k));
-    }
-    return acc;
-}
-__attribute__((target("ssse3"))) static uint64_t k_pmaddubsw_sem(unsigned long long it)
-{
-    (void)it;
-    static const unsigned long long rows[][4] = {
-        {0xffffffffffffffffULL, 0xffffffffffffffffULL, 0x7f7f7f7f7f7f7f7fULL, 0x7f7f7f7f7f7f7f7fULL},
-        {0xffffffffffffffffULL, 0xffffffffffffffffULL, 0x8080808080808080ULL, 0x8080808080808080ULL},
-        {0x8080808080808080ULL, 0x8080808080808080ULL, 0x8080808080808080ULL, 0x8080808080808080ULL},
-        {0x0101010101010101ULL, 0x0101010101010101ULL, 0x7f7f7f7f7f7f7f7fULL, 0x7f7f7f7f7f7f7f7fULL},
-        {0x8090a0b0c0d0e0ffULL, 0x01020304050607ffULL, 0x0102030405060780ULL, 0x81828384858687ffULL},
-        {0x8080808080808080ULL, 0x8080808080808080ULL, 0x8181818181818181ULL, 0x8181818181818181ULL},
-        {0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL},
-        {0x0000000000000000ULL, 0x0000000000000000ULL, 0x8080808080808080ULL, 0x8080808080808080ULL},
-    };
-    unsigned i, np = (unsigned)(sizeof(rows) / sizeof(rows[0]));
-    uint64_t acc = 0;
-    for (i = 0; i < np; i++) {
-        __m128i a = _mm_set_epi64x((long long)rows[i][0], (long long)rows[i][1]);
-        __m128i k = _mm_set_epi64x((long long)rows[i][2], (long long)rows[i][3]);
-        acc = (acc << 7) | (acc >> 57); acc ^= ib_sig128(_mm_maddubs_epi16(a, k));
-    }
-    return acc;
-}
-__attribute__((target("ssse3"))) static uint64_t k_pmulhrsw_sem(unsigned long long it)
-{
-    (void)it;
-    static const unsigned long long rows[][4] = {
-        {0x8000800080008000ULL, 0x8000800080008000ULL, 0x8000800080008000ULL, 0x8000800080008000ULL},
-        {0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL},
-        {0x4000400040004000ULL, 0x4000400040004000ULL, 0x4000400040004000ULL, 0x4000400040004000ULL},
-        {0x7fff80000001ffffULL, 0x7fff800040000001ULL, 0xabcd4000ffff8000ULL, 0x000280004000ffffULL},
-        {0x7fff7fff7fff7fffULL, 0x7fff7fff7fff7fffULL, 0x7fff7fff7fff7fffULL, 0x7fff7fff7fff7fffULL},
-        {0x0001000100010001ULL, 0x0001000100010001ULL, 0x7fff7fff7fff7fffULL, 0x7fff7fff7fff7fffULL},
-        {0x8000800080008000ULL, 0x8000800080008000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL},
-    };
-    unsigned i, np = (unsigned)(sizeof(rows) / sizeof(rows[0]));
-    uint64_t acc = 0;
-    for (i = 0; i < np; i++) {
-        __m128i a = _mm_set_epi64x((long long)rows[i][0], (long long)rows[i][1]);
-        __m128i k = _mm_set_epi64x((long long)rows[i][2], (long long)rows[i][3]);
-        acc = (acc << 7) | (acc >> 57); acc ^= ib_sig128(_mm_mulhrs_epi16(a, k));
-    }
-    return acc;
-}
-__attribute__((target("ssse3"))) static uint64_t k_pabsb_sem(unsigned long long it)
-{
-    (void)it;
-    static const unsigned long long rows[][4] = {
-        {0x8080808080808080ULL, 0x8080808080808080ULL, 0ULL, 0ULL},
-        {0x7f7f7f7f7f7f7f7fULL, 0x7f7f7f7f7f7f7f7fULL, 0ULL, 0ULL},
-        {0xfffe01807f80feffULL, 0x010280ff7f80fe01ULL, 0ULL, 0ULL},
-        {0x0000000000000000ULL, 0x0000000000000000ULL, 0ULL, 0ULL},
-        {0x55aa55aa55aa55aaULL, 0xaaaaaaaaaaaaaaaaULL, 0ULL, 0ULL},
-    };
-    unsigned i, np = (unsigned)(sizeof(rows) / sizeof(rows[0]));
-    uint64_t acc = 0;
-    for (i = 0; i < np; i++) {
-        __m128i a = _mm_set_epi64x((long long)rows[i][0], (long long)rows[i][1]);
-        acc = (acc << 7) | (acc >> 57); acc ^= ib_sig128(_mm_abs_epi8(a));
-    }
-    return acc;
-}
-__attribute__((target("ssse3"))) static uint64_t k_phaddsw_sem(unsigned long long it)
-{
-    (void)it;
-    static const unsigned long long rows[][4] = {
-        {0x7fff7fff7fff7fffULL, 0x7fff7fff7fff7fffULL, 0x0001000100010001ULL, 0x0001000100010001ULL},
-        {0x8000800080008000ULL, 0x8000800080008000ULL, 0xffff0001ffff0001ULL, 0xffff0001ffff0001ULL},
-        {0x0102030405060708ULL, 0x090a0b0c0d0e0f10ULL, 0x4000c000ffff7fffULL, 0x0001ffff80000000ULL},
-        {0xffffffffffffffffULL, 0xffffffffffffffffULL, 0x8000800080008000ULL, 0x8000800080008000ULL},
-    };
-    unsigned i, np = (unsigned)(sizeof(rows) / sizeof(rows[0]));
-    uint64_t acc = 0;
-    for (i = 0; i < np; i++) {
-        __m128i a = _mm_set_epi64x((long long)rows[i][0], (long long)rows[i][1]);
-        __m128i k = _mm_set_epi64x((long long)rows[i][2], (long long)rows[i][3]);
-        acc = (acc << 7) | (acc >> 57); acc ^= ib_sig128(_mm_hadds_epi16(a, k));
-    }
-    return acc;
-}
 
 /* ---------------- 用例表(名字首段=ISA 段, 见头注释; 访存族 bpop=16/8/4 折算 MB/s) ----
  * 顺序: 访存族/算术族各按 legacy 源排列, ISA 由名字前缀分辨(与输出顺序无关)。 */
+/* ==================== KAT 探针(每词干一条) ====================
+ * 口径: 输入由词干哈希重导: 甲=(i0,i1), 乙=(i1, rotl(i0,13)) —— 与 vec 的 VIN/VIN2
+ * 同构, 但独立各写一遍(互不参照)。位/整数族直接用位形; 浮点族由哈希整数精确构造
+ * 有限 double/float(fpd/fpf), 不拿哈希位形直当浮点(那可能撞成 NaN/Inf, 跨机尾数
+ * 位形不必相同)。128 位结果 -> o0,o1; outf=0(SSE 族不改 EFLAGS)。
+ * 访存族: 逐字填 i0,i1 后按宽度读回 -> 输出 == 输入(装错地址/宽度即 FAIL)。 */
+#define SI0(sn, kk)  IB_KIN8(sn, kk, 0, uint64_t)
+#define SI1(sn, kk)  IB_KIN8(sn, kk, 1, uint64_t)
+#define SRB(x, n)    (((x) >> (n)) | ((x) << (64 - (n))))
+#define SVIN(sn, kk)   _mm_set_epi64x((long long)SI1(sn, kk), (long long)SI0(sn, kk))
+#define SVIN2(sn, kk)  _mm_set_epi64x((long long)SRB(SI0(sn, kk), 13), (long long)SI1(sn, kk))
+#define SIN(sn, kk)    (g->i0 = SI0(sn, kk), g->i1 = SI1(sn, kk), g->inf = 0)
+#define SOUT(r)  do { union { __m128i v_; uint64_t q[2]; } u_; u_.v_ = (r); \
+                      g->o0 = u_.q[0]; g->o1 = u_.q[1]; g->outf = 0; } while (0)
+
+static uint64_t g_smk[2] __attribute__((aligned(16)));   /* KAT 访存源 */
+
+static double s_fpd(uint64_t u, int part)
+{
+    int32_t v = part ? (int32_t)(uint32_t)(u >> 32) : (int32_t)(uint32_t)u;
+    return (double)v / (part ? 8.0 : 4.0);
+}
+static __m128d s_pd2(uint64_t u0, uint64_t u1)
+{
+    return _mm_set_pd(s_fpd(u1, 1), s_fpd(u0, 0));
+}
+static __m128 s_ps4(uint64_t u0, uint64_t u1)
+{
+    return _mm_set_ps((float)s_fpd(u1, 1), (float)s_fpd(u1, 0),
+                      (float)s_fpd(u0, 1), (float)s_fpd(u0, 0));
+}
+#define SFL(sn, kk)  SI1(sn, kk), SRB(SI0(sn, kk), 13)   /* 乙的两字: 供 s_ps4(sn)/s_pd2(sn) 当两参展开 */
+
+/* 二元整数/位运算; 一元; 访存 */
+#define K_BIN(sn, TGT, EXPR)  __attribute__((target(TGT))) \
+static void k_##sn##_kat(int kk, ib_kv *g) { \
+    __m128i a = SVIN(#sn, kk), b = SVIN2(#sn, kk); SIN(#sn, kk); SOUT(EXPR); }
+#define K_UN(sn, TGT, EXPR)   __attribute__((target(TGT))) \
+static void k_##sn##_kat(int kk, ib_kv *g) { \
+    __m128i a = SVIN(#sn, kk); SIN(#sn, kk); SOUT(EXPR); }
+#define K_MOV(sn, TGT, EXPR)  __attribute__((target(TGT))) \
+static void k_##sn##_kat(int kk, ib_kv *g) { \
+    g_smk[0] = SI0(#sn, kk); g_smk[1] = SI1(#sn, kk); SIN(#sn, kk); SOUT(EXPR); }
+
+/* ---- 访存族 ---- */
+K_MOV(movups_ld, "sse2", _mm_loadu_si128((const __m128i *)g_smk))
+K_MOV(movaps_ld, "sse2", _mm_load_si128((const __m128i *)g_smk))
+K_MOV(movdqa,    "sse2", _mm_load_si128((const __m128i *)g_smk))
+K_MOV(movdqu,    "sse2", _mm_loadu_si128((const __m128i *)g_smk))
+K_MOV(movq,      "sse2", _mm_loadl_epi64((const __m128i *)g_smk))
+K_MOV(movss,     "sse2", _mm_castps_si128(_mm_load_ss((const float *)g_smk)))
+K_MOV(movsd,     "sse2", _mm_castpd_si128(_mm_load_sd((const double *)g_smk)))
+K_MOV(lddqu,     "ssse3", _mm_lddqu_si128((const __m128i *)g_smk))
+static void k_movaps_st_kat(int kk, ib_kv *g)
+{
+    __m128i a = SVIN("movaps_st", kk); SIN("movaps_st", kk);
+    _mm_store_si128((__m128i *)g_smk, a);
+    SOUT(_mm_load_si128((const __m128i *)g_smk));
+}
+
+/* ---- 位/整数 lane 族 ---- */
+K_BIN(xorps,  "sse2", _mm_castps_si128(_mm_xor_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b))))
+K_BIN(shufps, "sse2", _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b), 0x4e)))
+K_BIN(pcmpeqd,   "sse2",  _mm_cmpeq_epi32(a, b))
+K_BIN(paddd,     "sse2",  _mm_add_epi32(a, b))
+K_BIN(paddw,     "sse2",  _mm_add_epi16(a, b))
+K_BIN(pmaddwd,   "sse2",  _mm_madd_epi16(a, b))
+K_BIN(pcmpeqq,   "sse4.2", _mm_cmpeq_epi64(a, b))
+K_BIN(pshufb,       "ssse3", _mm_shuffle_epi8(a, b))
+K_BIN(pshufb_sem,   "ssse3", _mm_shuffle_epi8(a, b))
+K_BIN(pmaddubsw,    "ssse3", _mm_maddubs_epi16(a, b))
+K_BIN(pmaddubsw_sem,"ssse3", _mm_maddubs_epi16(a, b))
+K_BIN(pmulhrsw,     "ssse3", _mm_mulhrs_epi16(a, b))
+K_BIN(pmulhrsw_sem, "ssse3", _mm_mulhrs_epi16(a, b))
+K_BIN(palignr,      "ssse3", _mm_alignr_epi8(a, b, 5))
+K_BIN(phaddsw_sem,  "ssse3", _mm_hadds_epi16(a, b))
+K_BIN(pmulld,   "sse4.1", _mm_mullo_epi32(a, b))
+K_BIN(pblendw,  "sse4.1", _mm_blend_epi16(a, b, 0x3c))
+K_BIN(mpsadbw,  "sse4.1", _mm_mpsadbw_epu8(a, b, 3))
+K_UN(pabsw,      "ssse3",  _mm_abs_epi16(a))
+K_UN(pabsb_sem,  "ssse3",  _mm_abs_epi8(a))
+K_UN(pmovsxwd,   "sse4.1", _mm_cvtepi16_epi32(a))
+K_UN(phminposuw, "sse4.1", _mm_minpos_epu16(a))
+
+/* ---- 浮点族(有限值构造) ---- */
+__attribute__((target("sse2"))) static void k_mulss_kat(int kk, ib_kv *g)
+{ __m128 a = s_ps4(SI0("mulss", kk), SI1("mulss", kk)), b = s_ps4(SFL("mulss", kk));
+  SIN("mulss", kk); SOUT(_mm_castps_si128(_mm_mul_ss(a, b))); }
+__attribute__((target("sse2"))) static void k_addss_kat(int kk, ib_kv *g)
+{ __m128 a = s_ps4(SI0("addss", kk), SI1("addss", kk)), b = s_ps4(SFL("addss", kk));
+  SIN("addss", kk); SOUT(_mm_castps_si128(_mm_add_ss(a, b))); }
+__attribute__((target("sse2"))) static void k_subss_kat(int kk, ib_kv *g)
+{ __m128 a = s_ps4(SI0("subss", kk), SI1("subss", kk)), b = s_ps4(SFL("subss", kk));
+  SIN("subss", kk); SOUT(_mm_castps_si128(_mm_sub_ss(a, b))); }
+__attribute__((target("sse2"))) static void k_addpd_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("addpd", kk), SI1("addpd", kk)), b = s_pd2(SFL("addpd", kk));
+  SIN("addpd", kk); SOUT(_mm_castpd_si128(_mm_add_pd(a, b))); }
+__attribute__((target("sse2"))) static void k_mulpd_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("mulpd", kk), SI1("mulpd", kk)), b = s_pd2(SFL("mulpd", kk));
+  SIN("mulpd", kk); SOUT(_mm_castpd_si128(_mm_mul_pd(a, b))); }
+__attribute__((target("sse2"))) static void k_addsd_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("addsd", kk), SI1("addsd", kk)), b = s_pd2(SFL("addsd", kk));
+  SIN("addsd", kk); SOUT(_mm_castpd_si128(_mm_add_sd(a, b))); }
+__attribute__((target("sse2"))) static void k_divsd_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("divsd", kk), SI1("divsd", kk)), b = s_pd2(SFL("divsd", kk));
+  SIN("divsd", kk); SOUT(_mm_castpd_si128(_mm_div_sd(a, b))); }
+__attribute__((target("sse2"))) static void k_cvttpd2dq_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("cvttpd2dq", kk), SI1("cvttpd2dq", kk));
+  SIN("cvttpd2dq", kk); SOUT(_mm_cvttpd_epi32(a)); }
+__attribute__((target("sse3"))) static void k_haddpd_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("haddpd", kk), SI1("haddpd", kk)), b = s_pd2(SFL("haddpd", kk));
+  SIN("haddpd", kk); SOUT(_mm_castpd_si128(_mm_hadd_pd(a, b))); }
+__attribute__((target("sse3"))) static void k_addsubpd_kat(int kk, ib_kv *g)
+{ __m128d a = s_pd2(SI0("addsubpd", kk), SI1("addsubpd", kk)), b = s_pd2(SFL("addsubpd", kk));
+  SIN("addsubpd", kk); SOUT(_mm_castpd_si128(_mm_addsub_pd(a, b))); }
+__attribute__((target("sse4.1"))) static void k_roundps_kat(int kk, ib_kv *g)
+{ __m128 a = s_ps4(SI0("roundps", kk), SI1("roundps", kk));
+  SIN("roundps", kk); SOUT(_mm_castps_si128(_mm_round_ps(a, 0x00))); }
+
 static const ib_case g_cases[] = {
-    { "sse_movups_ld",   NULL,     k_movups,        k_movups_tp,        0, NULL, 16 },
-    { "sse_movaps_ld",   NULL,     k_movaps,        k_movaps_tp,        0, NULL, 16 },
-    { "sse_movaps_st",   NULL,     k_movaps_st,     k_movaps_st_tp,     0, NULL, 16 },
-    { "sse_movss",       NULL,     k_movss,         k_movss_tp,         0, NULL, 4  },
-    { "sse2_movsd",      NULL,     k_movsd,         k_movsd_tp,         0, NULL, 8  },
-    { "sse2_movdqa",     NULL,     k_movdqa,        k_movdqa_tp,        0, NULL, 16 },
-    { "sse2_movdqu",     NULL,     k_movdqu,        k_movdqu_tp,        0, NULL, 16 },
-    { "sse2_movq",       NULL,     k_movq,          k_movq_tp,          0, NULL, 8  },
-    { "sse_mulss",       NULL,     k_mulss,         k_mulss_tp,         0, NULL, 0 },
-    { "sse_addss",       NULL,     k_addss,         k_addss_tp,         0, NULL, 0 },
-    { "sse_subss",       NULL,     k_subss,         k_subss_tp,         0, NULL, 0 },
-    { "sse_shufps",      NULL,     k_shufps,        k_shufps_tp,        0, NULL, 0 },
-    { "sse_xorps",       NULL,     k_xorps,         k_xorps_tp,         0, NULL, 0 },
-    { "sse2_pcmpeqd",    NULL,     k_pcmpeqd,       k_pcmpeqd_tp,       0, NULL, 0 },
-    { "sse2_paddd",      NULL,     k_paddd,         k_paddd_tp,         0, NULL, 0,
-      k_paddd_b8 },
-    { "sse2_paddw",      NULL,     k_paddw,         k_paddw_tp,         0, NULL, 0 },
-    { "sse2_pmaddwd",    NULL,     k_pmaddwd,       k_pmaddwd_tp,       0, NULL, 0 },
-    { "sse2_addpd",      NULL,     k_addpd,         k_addpd_tp,         0, NULL, 0 },
-    { "sse2_mulpd",      NULL,     k_mulpd,         k_mulpd_tp,         0, NULL, 0 },
-    { "sse2_addsd",      NULL,     k_addsd,         k_addsd_tp,         0, NULL, 0 },
-    { "sse2_divsd",      NULL,     k_divsd,         k_divsd_tp,         0, NULL, 0 },
-    { "sse2_cvttpd2dq",  NULL,     k_cvttpd2dq,     k_cvttpd2dq_tp,     0, NULL, 0 },
-    { "sse3_haddpd",     "sse3",   k_haddpd,        k_haddpd_tp,        0, NULL, 0 },
-    { "sse3_addsubpd",   "sse3",   k_addsubpd,      k_addsubpd_tp,      0, NULL, 0 },
-    { "ssse3_lddqu",     "ssse3",  k_lddqu,         k_lddqu_tp,         0, NULL, 16 },
-    { "ssse3_pshufb",    "ssse3",  k_pshufb,        k_pshufb_tp,        0, NULL, 0 },
-    { "ssse3_pmaddubsw", "ssse3",  k_pmaddubsw,     k_pmaddubsw_tp,     0, NULL, 0 },
-    { "ssse3_pmulhrsw",  "ssse3",  k_pmulhrsw,      k_pmulhrsw_tp,      0, NULL, 0 },
-    { "ssse3_pabsw",     "ssse3",  k_pabsw,         k_pabsw_tp,         0, NULL, 0 },
-    { "ssse3_palignr",   "ssse3",  k_palignr,       k_palignr_tp,       0, NULL, 0 },
-    { "sse41_pmulld",    "sse4.1", k_pmulld,        k_pmulld_tp,        0, NULL, 0 },
-    { "sse41_pmovsxwd",  "sse4.1", k_pmovsxwd,      k_pmovsxwd_tp,      0, NULL, 0 },
-    { "sse41_pblendw",   "sse4.1", k_pblendw,       k_pblendw_tp,       0, NULL, 0 },
-    { "sse41_mpsadbw",   "sse4.1", k_mpsadbw,       k_mpsadbw_tp,       0, NULL, 0 },
-    { "sse41_phminposuw","sse4.1", k_phminposuw,    k_phminposuw_tp,    0, NULL, 0 },
-    { "sse41_roundps",   "sse4.1", k_roundps,       k_roundps_tp,       0, NULL, 0 },
-    { "sse42_pcmpeqq",   "sse4.2", k_pcmpeqq,       k_pcmpeqq_tp,       0, NULL, 0 },
-    { "ssse3_pshufb_sem",    "ssse3", 0, 0, k_pshufb_sem,    "r4s5", 0 },
-    { "ssse3_pmaddubsw_sem", "ssse3", 0, 0, k_pmaddubsw_sem, "r4s5", 0 },
-    { "ssse3_pmulhrsw_sem",  "ssse3", 0, 0, k_pmulhrsw_sem,  "r4s5", 0 },
-    { "ssse3_pabsb_sem",     "ssse3", 0, 0, k_pabsb_sem,     "r4s5", 0 },
-    { "ssse3_phaddsw_sem",   "ssse3", 0, 0, k_phaddsw_sem,   "r4s5", 0 },
+    { "sse_movups_ld", NULL, k_movups, k_movups_tp, 0, NULL, 16, NULL, 0,
+      k_movups_ld_kat, IB_KAT_movups_ld, "movups_ld" },
+    { "sse_movaps_ld", NULL, k_movaps, k_movaps_tp, 0, NULL, 16, NULL, 0,
+      k_movaps_ld_kat, IB_KAT_movaps_ld, "movaps_ld" },
+    { "sse_movaps_st", NULL, k_movaps_st, k_movaps_st_tp, 0, NULL, 16, NULL, 0,
+      k_movaps_st_kat, IB_KAT_movaps_st, "movaps_st" },
+    { "sse_movss", NULL, k_movss, k_movss_tp, 0, NULL, 4, NULL, 0,
+      k_movss_kat, IB_KAT_movss, "movss" },
+    { "sse2_movsd", NULL, k_movsd, k_movsd_tp, 0, NULL, 8, NULL, 0,
+      k_movsd_kat, IB_KAT_movsd, "movsd" },
+    { "sse2_movdqa", NULL, k_movdqa, k_movdqa_tp, 0, NULL, 16, NULL, 0,
+      k_movdqa_kat, IB_KAT_movdqa, "movdqa" },
+    { "sse2_movdqu", NULL, k_movdqu, k_movdqu_tp, 0, NULL, 16, NULL, 0,
+      k_movdqu_kat, IB_KAT_movdqu, "movdqu" },
+    { "sse2_movq", NULL, k_movq, k_movq_tp, 0, NULL, 8, NULL, 0,
+      k_movq_kat, IB_KAT_movq, "movq" },
+    { "sse_mulss", NULL, k_mulss, k_mulss_tp, 0, NULL, 0, NULL, 0,
+      k_mulss_kat, IB_KAT_mulss, "mulss" },
+    { "sse_addss", NULL, k_addss, k_addss_tp, 0, NULL, 0, NULL, 0,
+      k_addss_kat, IB_KAT_addss, "addss" },
+    { "sse_subss", NULL, k_subss, k_subss_tp, 0, NULL, 0, NULL, 0,
+      k_subss_kat, IB_KAT_subss, "subss" },
+    { "sse_shufps", NULL, k_shufps, k_shufps_tp, 0, NULL, 0, NULL, 0,
+      k_shufps_kat, IB_KAT_shufps, "shufps" },
+    { "sse_xorps", NULL, k_xorps, k_xorps_tp, 0, NULL, 0, NULL, 0,
+      k_xorps_kat, IB_KAT_xorps, "xorps" },
+    { "sse2_pcmpeqd", NULL, k_pcmpeqd, k_pcmpeqd_tp, 0, NULL, 0, NULL, 0,
+      k_pcmpeqd_kat, IB_KAT_pcmpeqd, "pcmpeqd" },
+    { "sse2_paddd", NULL, k_paddd, k_paddd_tp, 0, NULL, 0, k_paddd_b8, 0,
+      k_paddd_kat, IB_KAT_paddd, "paddd" },
+    { "sse2_paddw", NULL, k_paddw, k_paddw_tp, 0, NULL, 0, NULL, 0,
+      k_paddw_kat, IB_KAT_paddw, "paddw" },
+    { "sse2_pmaddwd", NULL, k_pmaddwd, k_pmaddwd_tp, 0, NULL, 0, NULL, 0,
+      k_pmaddwd_kat, IB_KAT_pmaddwd, "pmaddwd" },
+    { "sse2_addpd", NULL, k_addpd, k_addpd_tp, 0, NULL, 0, NULL, 0,
+      k_addpd_kat, IB_KAT_addpd, "addpd" },
+    { "sse2_mulpd", NULL, k_mulpd, k_mulpd_tp, 0, NULL, 0, NULL, 0,
+      k_mulpd_kat, IB_KAT_mulpd, "mulpd" },
+    { "sse2_addsd", NULL, k_addsd, k_addsd_tp, 0, NULL, 0, NULL, 0,
+      k_addsd_kat, IB_KAT_addsd, "addsd" },
+    { "sse2_divsd", NULL, k_divsd, k_divsd_tp, 0, NULL, 0, NULL, 0,
+      k_divsd_kat, IB_KAT_divsd, "divsd" },
+    { "sse2_cvttpd2dq", NULL, k_cvttpd2dq, k_cvttpd2dq_tp, 0, NULL, 0, NULL, 0,
+      k_cvttpd2dq_kat, IB_KAT_cvttpd2dq, "cvttpd2dq" },
+    { "sse3_haddpd", "sse3", k_haddpd, k_haddpd_tp, 0, NULL, 0, NULL, 0,
+      k_haddpd_kat, IB_KAT_haddpd, "haddpd" },
+    { "sse3_addsubpd", "sse3", k_addsubpd, k_addsubpd_tp, 0, NULL, 0, NULL, 0,
+      k_addsubpd_kat, IB_KAT_addsubpd, "addsubpd" },
+    { "ssse3_lddqu", "ssse3", k_lddqu, k_lddqu_tp, 0, NULL, 16, NULL, 0,
+      k_lddqu_kat, IB_KAT_lddqu, "lddqu" },
+    { "ssse3_pshufb", "ssse3", k_pshufb, k_pshufb_tp, 0, NULL, 0, NULL, 0,
+      k_pshufb_kat, IB_KAT_pshufb, "pshufb" },
+    { "ssse3_pmaddubsw", "ssse3", k_pmaddubsw, k_pmaddubsw_tp, 0, NULL, 0, NULL, 0,
+      k_pmaddubsw_kat, IB_KAT_pmaddubsw, "pmaddubsw" },
+    { "ssse3_pmulhrsw", "ssse3", k_pmulhrsw, k_pmulhrsw_tp, 0, NULL, 0, NULL, 0,
+      k_pmulhrsw_kat, IB_KAT_pmulhrsw, "pmulhrsw" },
+    { "ssse3_pabsw", "ssse3", k_pabsw, k_pabsw_tp, 0, NULL, 0, NULL, 0,
+      k_pabsw_kat, IB_KAT_pabsw, "pabsw" },
+    { "ssse3_palignr", "ssse3", k_palignr, k_palignr_tp, 0, NULL, 0, NULL, 0,
+      k_palignr_kat, IB_KAT_palignr, "palignr" },
+    { "sse41_pmulld", "sse4.1", k_pmulld, k_pmulld_tp, 0, NULL, 0, NULL, 0,
+      k_pmulld_kat, IB_KAT_pmulld, "pmulld" },
+    { "sse41_pmovsxwd", "sse4.1", k_pmovsxwd, k_pmovsxwd_tp, 0, NULL, 0, NULL, 0,
+      k_pmovsxwd_kat, IB_KAT_pmovsxwd, "pmovsxwd" },
+    { "sse41_pblendw", "sse4.1", k_pblendw, k_pblendw_tp, 0, NULL, 0, NULL, 0,
+      k_pblendw_kat, IB_KAT_pblendw, "pblendw" },
+    { "sse41_mpsadbw", "sse4.1", k_mpsadbw, k_mpsadbw_tp, 0, NULL, 0, NULL, 0,
+      k_mpsadbw_kat, IB_KAT_mpsadbw, "mpsadbw" },
+    { "sse41_phminposuw", "sse4.1", k_phminposuw, k_phminposuw_tp, 0, NULL, 0, NULL, 0,
+      k_phminposuw_kat, IB_KAT_phminposuw, "phminposuw" },
+    { "sse41_roundps", "sse4.1", k_roundps, k_roundps_tp, 0, NULL, 0, NULL, 0,
+      k_roundps_kat, IB_KAT_roundps, "roundps" },
+    { "sse42_pcmpeqq", "sse4.2", k_pcmpeqq, k_pcmpeqq_tp, 0, NULL, 0, NULL, 0,
+      k_pcmpeqq_kat, IB_KAT_pcmpeqq, "pcmpeqq" },
+    { "ssse3_pshufb_sem", "ssse3", 0, 0, 0, NULL, 0, NULL, 0,
+      k_pshufb_sem_kat, IB_KAT_pshufb_sem, "pshufb_sem" },
+    { "ssse3_pmaddubsw_sem", "ssse3", 0, 0, 0, NULL, 0, NULL, 0,
+      k_pmaddubsw_sem_kat, IB_KAT_pmaddubsw_sem, "pmaddubsw_sem" },
+    { "ssse3_pmulhrsw_sem", "ssse3", 0, 0, 0, NULL, 0, NULL, 0,
+      k_pmulhrsw_sem_kat, IB_KAT_pmulhrsw_sem, "pmulhrsw_sem" },
+    { "ssse3_pabsb_sem", "ssse3", 0, 0, 0, NULL, 0, NULL, 0,
+      k_pabsb_sem_kat, IB_KAT_pabsb_sem, "pabsb_sem" },
+    { "ssse3_phaddsw_sem", "ssse3", 0, 0, 0, NULL, 0, NULL, 0,
+      k_phaddsw_sem_kat, IB_KAT_phaddsw_sem, "phaddsw_sem" },
 };
 #define NCASES ((int)(sizeof(g_cases) / sizeof(g_cases[0])))
 
