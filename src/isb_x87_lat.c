@@ -328,3 +328,37 @@ uint64_t k_fscale_int_lat(unsigned long long iters) { return k_fscale_int_tp(ite
 uint64_t k_fxam_kinds_lat(unsigned long long iters) { return k_fxam_kinds_tp(iters); }
 uint64_t k_fstsw_allbits_lat(unsigned long long iters) { return k_fstsw_allbits_tp(iters); }
 uint64_t k_fninit_defaults_lat(unsigned long long iters) { return k_fninit_defaults_tp(iters); }
+
+
+/* =====================================================================
+ * P8 超越函数/除法精度边界(26 条)专用延迟: 口径与迁入类同一 —— 无法自串 ST0
+ * 依赖链(超越指令的值每轮变号/收敛), "专用" = 各自定时长体同形(固定源槽每轮
+ * 重灌, 输入恒为边界档常量)。lat/tp 同形还有一个好处: lat 跑的就是接 KAT 的
+ * 那条指令序列, 慢路径(denormal/越界)不会只在某一侧看得见。
+ * ===================================================================== */
+uint64_t k_fsin_p64_lat(unsigned long long iters)     { return k_fsin_p64_tp(iters); }
+uint64_t k_fsin_p80_lat(unsigned long long iters)     { return k_fsin_p80_tp(iters); }
+uint64_t k_fcos_p64_lat(unsigned long long iters)     { return k_fcos_p64_tp(iters); }
+uint64_t k_fcos_p80_lat(unsigned long long iters)     { return k_fcos_p80_tp(iters); }
+uint64_t k_fsqrt_p64_lat(unsigned long long iters)    { return k_fsqrt_p64_tp(iters); }
+uint64_t k_fsqrt_p80_lat(unsigned long long iters)    { return k_fsqrt_p80_tp(iters); }
+uint64_t k_f2xm1_p64_lat(unsigned long long iters)    { return k_f2xm1_p64_tp(iters); }
+uint64_t k_f2xm1_p80_lat(unsigned long long iters)    { return k_f2xm1_p80_tp(iters); }
+uint64_t k_fsincos_p64_lat(unsigned long long iters)  { return k_fsincos_p64_tp(iters); }
+uint64_t k_fsincos_p80_lat(unsigned long long iters)  { return k_fsincos_p80_tp(iters); }
+uint64_t k_fptan_p64_lat(unsigned long long iters)    { return k_fptan_p64_tp(iters); }
+uint64_t k_fptan_p80_lat(unsigned long long iters)    { return k_fptan_p80_tp(iters); }
+uint64_t k_fpatan_p64_lat(unsigned long long iters)   { return k_fpatan_p64_tp(iters); }
+uint64_t k_fpatan_p80_lat(unsigned long long iters)   { return k_fpatan_p80_tp(iters); }
+uint64_t k_fyl2x_p64_lat(unsigned long long iters)    { return k_fyl2x_p64_tp(iters); }
+uint64_t k_fyl2x_p80_lat(unsigned long long iters)    { return k_fyl2x_p80_tp(iters); }
+uint64_t k_fyl2xp1_p64_lat(unsigned long long iters)  { return k_fyl2xp1_p64_tp(iters); }
+uint64_t k_fyl2xp1_p80_lat(unsigned long long iters)  { return k_fyl2xp1_p80_tp(iters); }
+uint64_t k_fprem_p64_lat(unsigned long long iters)    { return k_fprem_p64_tp(iters); }
+uint64_t k_fprem_p80_lat(unsigned long long iters)    { return k_fprem_p80_tp(iters); }
+uint64_t k_fprem1_p64_lat(unsigned long long iters)   { return k_fprem1_p64_tp(iters); }
+uint64_t k_fprem1_p80_lat(unsigned long long iters)   { return k_fprem1_p80_tp(iters); }
+uint64_t k_fdiv_p64_lat(unsigned long long iters)     { return k_fdiv_p64_tp(iters); }
+uint64_t k_fdiv_p80_lat(unsigned long long iters)     { return k_fdiv_p80_tp(iters); }
+uint64_t k_fdivr_p64_lat(unsigned long long iters)    { return k_fdivr_p64_tp(iters); }
+uint64_t k_fdivr_p80_lat(unsigned long long iters)    { return k_fdivr_p80_tp(iters); }

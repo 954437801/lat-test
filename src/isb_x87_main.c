@@ -653,6 +653,44 @@ uint64_t qv(const char *sn, int kk, int slot)
 }
 
 
+/* P8 精度边界用例的 8 组尾数扰动(口径见 isb_x87.h 的声明注):
+ *   p64: 扰动放进 double 可见区(位 23..12), 低 12 格恒 0 —— 保证该档入值可被
+ *        double 精确表示、m80<->double 往返无损(本档的命题就是"LATX 拿 double 算
+ *        得对不对"), 不能像 p80 那样动低位;
+ *   p80: 扰动静止在低位(位 11..0, XOR 翻), 入值仍超 double。
+ * 两档同一 kk 拿到同一条 12 位变化量, 只是落位不同。 */
+uint64_t op_mant(const char *stem, int kk, uint64_t base)
+{
+    uint64_t perturb = (uint64_t)(IB_KIN8(stem, kk, 0, uint32_t) & 0xFFFu);
+
+    if (base == MANT_P64)
+        return base | (perturb << 12);  /* 低 12 格保持 0(double 丢的是低 11 格) */
+    return base ^ perturb;              /* 低 12 位从全 1 翻掉 perturb 位 */
+}
+
+
+/* P8 的 13 行入值表(lat/tp/kat 三处共用, 注释里的区间值可逐位反验:
+ * X1|M80_E(0)=1.0、M80_1PN(1)|M80_E(0)=1.5、X1|M80_E(-1)=0.5、
+ * M80_1PN(1)|M80_E(1)=3 不在表里 —— 副操作数全取 2 的幂或 1.5, double 精确)。 */
+const struct ib_opinfo g_opinfo[OPINFO_N] = {
+    /* stem      ise  smant(D=缺哨兵 1.0)  sse          dual drain */
+    { "fsin",     0,   X1,                 M80_E(0),     0,   1    },  /* [1,2) */
+    { "fcos",     0,   X1,                 M80_E(0),     0,   1    },
+    { "fsqrt",    0,   X1,                 M80_E(0),     0,   1    },  /* 正数, 避开 fsqrt_neg_ie */
+    { "f2xm1",   -1,   X1,                 M80_E(0),     0,   1    },  /* [0.5,1) */
+    { "fsincos",  0,   X1,                 M80_E(0),     0,   2    },  /* ST0=sin ST1=cos */
+    { "fptan",   -2,   X1,                 M80_E(0),     0,   2    },  /* 小角: 角在 ST1=smant(边界槽),
+                                                                          * 主槽只是哨兵 1.0, tan 在倒数第二次 fstpt 读 */
+    { "fpatan",   0,   X1,                 M80_E(0),     1,   1    },  /* 弹栈类 */
+    { "fyl2x",    0,   X1,                 M80_E(0),     1,   1    },
+    { "fyl2xp1", -10,  X1,                 M80_E(0),     1,   1    },  /* x~1e-3 */
+    { "fprem",    2,   X1,                 M80_E(-1),    1,   2    },  /* [4,8) % 0.5 */
+    { "fprem1",   2,   X1,                 M80_E(-1),    1,   2    },
+    { "fdiv",     2,   M80_1PN(1),         M80_E(0),     1,   2    },  /* [4,8)/1.5 */
+    { "fdivr",    2,   M80_1PN(1),         M80_E(0),     1,   2    },
+};
+
+
 __attribute__((noinline)) void x87_bin80_core(int kk, const struct xbop *t,
                                                     const char *stem, ib_kv *g)
 {
@@ -884,6 +922,61 @@ static const ib_case g_cases[] = {
       k_fstsw_allbits_kat, IB_KAT_fstsw_allbits, "fstsw_allbits" },
     { "x87_fninit_defaults", NULL, k_fninit_defaults_lat, k_fninit_defaults_tp, 0, NULL, 0, NULL, 0,
       k_fninit_defaults_kat, IB_KAT_fninit_defaults, "fninit_defaults" },
+    /* --- P8 超越函数/除法精度边界(26): 13 指令 x {p64 对照, p80 越界} 两档尾数。
+     * lits=200000: 软模拟 fsin/fprem 单条可达微秒级, 默认 200 万会把单条拉到 2s+;
+     * 入值/形态表在 g_opinfo, 真值由 gen_val.sh x87 采集(未采前 IB_KV_UNSET 自动跳过)。 */
+    { "x87_fsin_p64",     NULL, k_fsin_p64_lat,     k_fsin_p64_tp,     0, NULL, 0, NULL, 200000,
+      k_fsin_p64_kat,     IB_KAT_fsin_p64,     "fsin_p64" },
+    { "x87_fsin_p80",     NULL, k_fsin_p80_lat,     k_fsin_p80_tp,     0, NULL, 0, NULL, 200000,
+      k_fsin_p80_kat,     IB_KAT_fsin_p80,     "fsin_p80" },
+    { "x87_fcos_p64",     NULL, k_fcos_p64_lat,     k_fcos_p64_tp,     0, NULL, 0, NULL, 200000,
+      k_fcos_p64_kat,     IB_KAT_fcos_p64,     "fcos_p64" },
+    { "x87_fcos_p80",     NULL, k_fcos_p80_lat,     k_fcos_p80_tp,     0, NULL, 0, NULL, 200000,
+      k_fcos_p80_kat,     IB_KAT_fcos_p80,     "fcos_p80" },
+    { "x87_fsqrt_p64",    NULL, k_fsqrt_p64_lat,    k_fsqrt_p64_tp,    0, NULL, 0, NULL, 200000,
+      k_fsqrt_p64_kat,    IB_KAT_fsqrt_p64,    "fsqrt_p64" },
+    { "x87_fsqrt_p80",    NULL, k_fsqrt_p80_lat,    k_fsqrt_p80_tp,    0, NULL, 0, NULL, 200000,
+      k_fsqrt_p80_kat,    IB_KAT_fsqrt_p80,    "fsqrt_p80" },
+    { "x87_f2xm1_p64",    NULL, k_f2xm1_p64_lat,    k_f2xm1_p64_tp,    0, NULL, 0, NULL, 200000,
+      k_f2xm1_p64_kat,    IB_KAT_f2xm1_p64,    "f2xm1_p64" },
+    { "x87_f2xm1_p80",    NULL, k_f2xm1_p80_lat,    k_f2xm1_p80_tp,    0, NULL, 0, NULL, 200000,
+      k_f2xm1_p80_kat,    IB_KAT_f2xm1_p80,    "f2xm1_p80" },
+    { "x87_fsincos_p64",  NULL, k_fsincos_p64_lat,  k_fsincos_p64_tp,  0, NULL, 0, NULL, 200000,
+      k_fsincos_p64_kat,  IB_KAT_fsincos_p64,  "fsincos_p64" },
+    { "x87_fsincos_p80",  NULL, k_fsincos_p80_lat,  k_fsincos_p80_tp,  0, NULL, 0, NULL, 200000,
+      k_fsincos_p80_kat,  IB_KAT_fsincos_p80,  "fsincos_p80" },
+    { "x87_fptan_p64",    NULL, k_fptan_p64_lat,    k_fptan_p64_tp,    0, NULL, 0, NULL, 200000,
+      k_fptan_p64_kat,    IB_KAT_fptan_p64,    "fptan_p64" },
+    { "x87_fptan_p80",    NULL, k_fptan_p80_lat,    k_fptan_p80_tp,    0, NULL, 0, NULL, 200000,
+      k_fptan_p80_kat,    IB_KAT_fptan_p80,    "fptan_p80" },
+    { "x87_fpatan_p64",   NULL, k_fpatan_p64_lat,   k_fpatan_p64_tp,   0, NULL, 0, NULL, 200000,
+      k_fpatan_p64_kat,   IB_KAT_fpatan_p64,   "fpatan_p64" },
+    { "x87_fpatan_p80",   NULL, k_fpatan_p80_lat,   k_fpatan_p80_tp,   0, NULL, 0, NULL, 200000,
+      k_fpatan_p80_kat,   IB_KAT_fpatan_p80,   "fpatan_p80" },
+    { "x87_fyl2x_p64",    NULL, k_fyl2x_p64_lat,    k_fyl2x_p64_tp,    0, NULL, 0, NULL, 200000,
+      k_fyl2x_p64_kat,    IB_KAT_fyl2x_p64,    "fyl2x_p64" },
+    { "x87_fyl2x_p80",    NULL, k_fyl2x_p80_lat,    k_fyl2x_p80_tp,    0, NULL, 0, NULL, 200000,
+      k_fyl2x_p80_kat,    IB_KAT_fyl2x_p80,    "fyl2x_p80" },
+    { "x87_fyl2xp1_p64",  NULL, k_fyl2xp1_p64_lat,  k_fyl2xp1_p64_tp,  0, NULL, 0, NULL, 200000,
+      k_fyl2xp1_p64_kat,  IB_KAT_fyl2xp1_p64,  "fyl2xp1_p64" },
+    { "x87_fyl2xp1_p80",  NULL, k_fyl2xp1_p80_lat,  k_fyl2xp1_p80_tp,  0, NULL, 0, NULL, 200000,
+      k_fyl2xp1_p80_kat,  IB_KAT_fyl2xp1_p80,  "fyl2xp1_p80" },
+    { "x87_fprem_p64",    NULL, k_fprem_p64_lat,    k_fprem_p64_tp,    0, NULL, 0, NULL, 200000,
+      k_fprem_p64_kat,    IB_KAT_fprem_p64,    "fprem_p64" },
+    { "x87_fprem_p80",    NULL, k_fprem_p80_lat,    k_fprem_p80_tp,    0, NULL, 0, NULL, 200000,
+      k_fprem_p80_kat,    IB_KAT_fprem_p80,    "fprem_p80" },
+    { "x87_fprem1_p64",   NULL, k_fprem1_p64_lat,   k_fprem1_p64_tp,   0, NULL, 0, NULL, 200000,
+      k_fprem1_p64_kat,   IB_KAT_fprem1_p64,   "fprem1_p64" },
+    { "x87_fprem1_p80",   NULL, k_fprem1_p80_lat,   k_fprem1_p80_tp,   0, NULL, 0, NULL, 200000,
+      k_fprem1_p80_kat,   IB_KAT_fprem1_p80,   "fprem1_p80" },
+    { "x87_fdiv_p64",     NULL, k_fdiv_p64_lat,     k_fdiv_p64_tp,     0, NULL, 0, NULL, 200000,
+      k_fdiv_p64_kat,     IB_KAT_fdiv_p64,     "fdiv_p64" },
+    { "x87_fdiv_p80",     NULL, k_fdiv_p80_lat,     k_fdiv_p80_tp,     0, NULL, 0, NULL, 200000,
+      k_fdiv_p80_kat,     IB_KAT_fdiv_p80,     "fdiv_p80" },
+    { "x87_fdivr_p64",    NULL, k_fdivr_p64_lat,    k_fdivr_p64_tp,    0, NULL, 0, NULL, 200000,
+      k_fdivr_p64_kat,    IB_KAT_fdivr_p64,    "fdivr_p64" },
+    { "x87_fdivr_p80",    NULL, k_fdivr_p80_lat,    k_fdivr_p80_tp,    0, NULL, 0, NULL, 200000,
+      k_fdivr_p80_kat,    IB_KAT_fdivr_p80,    "fdivr_p80" },
 };
 #define NCASES ((int)(sizeof(g_cases) / sizeof(g_cases[0])))
 

@@ -966,3 +966,127 @@ void k_fninit_defaults_kat(int kk, ib_kv *g)
             | ((uint64_t)envget16(16 + 4) << 32);
     g->outf = (uint64_t)fl & IB_FLG_MASK;
 }
+
+
+/* =====================================================================
+ * 8) P8 超越函数/除法精度边界(26 条)的 KAT 内核。
+ *    入值口径与 lat/tp 完全同形(同指令序列、同槽位分配), 唯一差别 = 主尾数
+ *    取 op_mant(stem,kk,base) 的 8 组扰动(高 52 位锁 base, 低 12 位哈希选图案)
+ *    —— 被测机若把 m80 归一到 double 再算, p80 档丢的低 11 格必落进 o0 低格;
+ *    p64 档同扰动但值在 double 内, 作对照组把"精度不足"与"实现不同"分开。
+ *    判定字段: o0=结果 mant, o1=结果 se | (sw<<16), outf=EFLAGS(IB_FLG_MASK 后);
+ *    fsincos 的 cos 占 o2/o3, fptan 的哨兵 1.0 也登记进 o2(mant 非 X1 即假实现)。
+ *    sw 取在任何存回/弹栈之前(P6 纪律); 唯一例外是五形态里的弹栈结果已在 ST0,
+ *    fnstsw 落在被测指令后、fstpt 前 —— TOP 读数才能把"弹了几格"一并钉住。
+ *    结果/哨兵槽预置 IB_POISON(假阳性教训见本文件 pc24 一族): 没写回必以
+ *    o0 != gold 报出, 不靠"碰巧是 0"自洽。
+ *    五种形态的汇编模板与 lat/tp 一一对应(改一边必改另一边, 槽位表见 tp 头注)。
+ * ===================================================================== */
+/* 固定缓存: 本组不能用 `g_t+n` 绝对内联 —— xb80 因 8 字节对齐 stride=16(非 10),
+ * g_t+20 会落进 g_t[1] 尾部只盖 mant 低 6 字、se/高位残留哨兵。改用专用 byte 缓存
+ * p8buf(无结构体对齐), 各 10 字 m80 槽按字节位移定死(下面模板里的 0/16/32/48/64/80),
+ * 单基址寄存器 %[b] + 常量位移寻址 —— 既修正地址又把 i386 6 个通用寄存器的压力
+ * 降到 base+fv+fl 三个(旧写法 s1/s0/r/d/w/fv/fl 超 6 个会 "impossible constraints")。
+ * 布局: S0=0(mant0-7/se8-9) S1=16 R=32(结果) D=48(哨兵) C=64(双结果补读) SW=80(状态字)。 */
+static unsigned char p8buf[96];
+
+#define P8_K_S1(op)  "fldt 16(%[b])\n\tfldt 0(%[b])\n\t" op "\n\tfnstsw 80(%[b])\n\tfstpt 32(%[b])\n\tfstpt 48(%[b])"
+#define P8_K_D1(op)  "fldt 16(%[b])\n\tfldt 0(%[b])\n\t" op "\n\tfnstsw 80(%[b])\n\tfstpt 32(%[b])"
+#define P8_K_D2(op)  "fldt 16(%[b])\n\tfldt 0(%[b])\n\t" op "\n\tfnstsw 80(%[b])\n\tfstpt 32(%[b])\n\tfstpt 48(%[b])"
+#define P8_K_SC      "fldt 0(%[b])\n\tfsincos\n\tfnstsw 80(%[b])\n\tfstpt 32(%[b])\n\tfstpt 64(%[b])"
+#define P8_K_PT      "fldt 16(%[b])\n\tfldt 0(%[b])\n\tfptan\n\tfnstsw 80(%[b])\n\tfstpt 48(%[b])\n\tfstpt 32(%[b])"
+
+/* 结果/补读槽回读(x86 小端, 非对齐读合法): mant 在槽基址, se 在基址+8 */
+#define P8_RM(off)   (*(volatile uint64_t *)(p8buf + (off)))
+#define P8_RS(off)   (*(volatile uint16_t *)(p8buf + (off) + 8))
+
+/* sn: 指令前缀; i: g_opinfo 下标; sfx: "p64"/"p80"; ASM: 拼好的模板 */
+#define P8_KAT(sn, i, sfx, base, ASM)                                       \
+    void k_##sn##_##sfx##_kat(int kk, ib_kv *g)                             \
+    {                                                                       \
+        X87_BEGIN();                                                        \
+        const struct ib_opinfo *e = &g_opinfo[i];                           \
+        char fs[24] = { 0 };                                                \
+        uint64_t m;                                                         \
+        uintptr_t fv, fl = 0;                                               \
+                                                                            \
+        strcat(strcpy(fs, e->stem), "_" #sfx);                              \
+        m = op_mant(fs, kk, (base));                                        \
+        fv = (uintptr_t)IB_KFL(fs, kk);                                     \
+        *(uint64_t *)(p8buf + 0)  = m;            /* S0: 主(边界)尾数 */   \
+        *(uint16_t *)(p8buf + 8)  = M80_E(e->ise);                          \
+        *(uint64_t *)(p8buf + 16) = e->smant;     /* S1: 副/哨兵 */        \
+        *(uint16_t *)(p8buf + 24) = e->sse;                                 \
+        *(uint64_t *)(p8buf + 32) = IB_POISON;    /* 结果/哨兵/补读槽预置 */ \
+        *(uint64_t *)(p8buf + 48) = IB_POISON;                              \
+        *(uint64_t *)(p8buf + 64) = IB_POISON;                              \
+        __asm__ volatile(IB_SETF ASM IB_GETF                                \
+                         : [fl] "=&r"(fl)                                   \
+                         : [b] "r"(p8buf), [fv] "r"(fv)                     \
+                         : "cc", "memory");                                 \
+        g->i0 = m;                g->i1 = e->smant;                          \
+        g->i2 = M80_E(e->ise);    g->i3 = e->sse;                            \
+        g->inf = fv;                                                          \
+        g->o0 = P8_RM(32);                                                   \
+        g->o1 = (uint64_t)P8_RS(32) | ((uint64_t)*(volatile uint16_t *)(p8buf + 80) << 16); \
+        g->o2 = 0;                                                           \
+        g->o3 = 0;                                                           \
+        g->outf = (uint64_t)fl & IB_FLG_MASK;                                \
+    }
+
+/* fsincos/fptan 的双结果补读: cos/哨兵存进 C=64 槽, 其余字段与通用形同。 */
+#define P8_KAT2(sn, i, sfx, base, ASM)                                      \
+    void k_##sn##_##sfx##_kat(int kk, ib_kv *g)                             \
+    {                                                                       \
+        X87_BEGIN();                                                        \
+        const struct ib_opinfo *e = &g_opinfo[i];                           \
+        char fs[24] = { 0 };                                                \
+        uint64_t m;                                                         \
+        uintptr_t fv, fl = 0;                                               \
+                                                                            \
+        strcat(strcpy(fs, e->stem), "_" #sfx);                              \
+        m = op_mant(fs, kk, (base));                                        \
+        fv = (uintptr_t)IB_KFL(fs, kk);                                     \
+        *(uint64_t *)(p8buf + 0)  = m;                                      \
+        *(uint16_t *)(p8buf + 8)  = M80_E(e->ise);                          \
+        *(uint64_t *)(p8buf + 16) = e->smant;                               \
+        *(uint16_t *)(p8buf + 24) = e->sse;                                 \
+        *(uint64_t *)(p8buf + 32) = IB_POISON;                              \
+        *(uint64_t *)(p8buf + 48) = IB_POISON;                              \
+        *(uint64_t *)(p8buf + 64) = IB_POISON;                              \
+        __asm__ volatile(IB_SETF ASM IB_GETF                                \
+                         : [fl] "=&r"(fl)                                   \
+                         : [b] "r"(p8buf), [fv] "r"(fv)                     \
+                         : "cc", "memory");                                 \
+        g->i0 = m;                g->i1 = e->smant;                          \
+        g->i2 = M80_E(e->ise);    g->i3 = e->sse;                            \
+        g->inf = fv;                                                          \
+        g->o0 = P8_RM(32);                                                   \
+        g->o1 = (uint64_t)P8_RS(32) | ((uint64_t)*(volatile uint16_t *)(p8buf + 80) << 16); \
+        g->o2 = P8_RM(64);                                                   \
+        g->o3 = (uint64_t)P8_RS(64);                                         \
+        g->outf = (uint64_t)fl & IB_FLG_MASK;                                \
+    }
+
+
+/* ---- 13 条指令 x 2 档(表序与 g_opinfo 一致; 模板与 lat/tp 同形) ---- */
+#define P8_KATPAIR(sn, i, ASM)                              \
+    P8_KAT(sn, i, p64, MANT_P64, ASM)                       \
+    P8_KAT(sn, i, p80, MANT_P80, ASM)
+
+P8_KATPAIR(fsin,    0, P8_K_S1("fsin"));
+P8_KATPAIR(fcos,    1, P8_K_S1("fcos"));
+P8_KATPAIR(fsqrt,   2, P8_K_S1("fsqrt"));
+P8_KATPAIR(f2xm1,   3, P8_K_S1("f2xm1"));
+P8_KAT2(fsincos, 4, p64, MANT_P64, P8_K_SC)
+P8_KAT2(fsincos, 4, p80, MANT_P80, P8_K_SC)
+P8_KAT2(fptan,   5, p64, MANT_P64, P8_K_PT)
+P8_KAT2(fptan,   5, p80, MANT_P80, P8_K_PT)
+P8_KATPAIR(fpatan,  6, P8_K_D1("fpatan"));
+P8_KATPAIR(fyl2x,   7, P8_K_D1("fyl2x"));
+P8_KATPAIR(fyl2xp1, 8, P8_K_D1("fyl2xp1"));
+P8_KATPAIR(fprem,   9, P8_K_D2("fprem"));
+P8_KATPAIR(fprem1, 10, P8_K_D2("fprem1"));
+/* fdiv/fdivr 显式弹栈形(同 tp 文件: 裸形会被汇编器静默翻译成 f*xp) */
+P8_KATPAIR(fdiv,   11, P8_K_D2("fdivp %%st,%%st(1)"));
+P8_KATPAIR(fdivr,  12, P8_K_D2("fdivrp %%st,%%st(1)"));

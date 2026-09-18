@@ -864,6 +864,77 @@ uint64_t k_fninit_defaults_tp(unsigned long long iters)
                          : : [c] "r"(&g_cw[5]), [w] "r"(&g_sw[5]) : "memory");
     }
     /* 循环外不再补读数: 循环体末态恒为归零后的 cw=0x037f/sw=0x0000 -> 签名 = 0x037f,
-     * 不随 iters 变也不是全零(定时长签名要的就是这两条)。 */
+     * 不随 iters 变也不是全零(定时长签名要的就是这两条)。*/
     return (uint64_t)cwget(5) ^ ((uint64_t)swgetn(5) << 16);
 }
+
+
+/* =====================================================================
+ * 8) P8 超越函数/除法精度边界(26 条 = 13 指令 x 2 档尾数)的定时长体。
+ *    每轮固定形态: 边界值走 fldt/fstpt m80 通路、源槽只读每轮重灌(输入恒定,
+ *    不因自串收敛成 0/denormal/inf), 栈深每轮回到 X87_BEGIN 后的 0(drain 列)。
+ *    p64/p80 两档共用同一指数档与同一副操作数, 唯一变量 = 主尾数低 12 格是否
+ *    为 0(MANT_P64/MANT_P80) —— 定时长不做判定, 入值取固定 base 不扰动。
+ *    五种栈形态(按被测指令的压栈/弹栈语义逐条算定, 见 g_opinfo 表; ASM 参数是
+ *    整段拼好的字面量 —— 运行时字符串拼不进 __asm__ 模板, 共享核方案已否):
+ *      S1  单源不弹(fsin/fcos/fsqrt/f2xm1): 主结果在 ST0, 另有一格哨兵 1.0 陪衬;
+ *      D1  双源弹栈(fpatan/fyl2x/fyl2xp1):  两入栈被消耗, 结果在 ST0;
+ *      D2  双源留两格(fprem/fprem1/fdiv/fdivr): 结果 + 未被消耗的副槽;
+ *      SC/PT 双结果(fsincos: sin/cos; fptan: tan 在 ST1、ST0 是恒 1.0)。
+ *    被测算子的主/副分工按"边界值的精度差在哪侧能落进结果低格"选(见 ops 文件头
+ *    的同一张分工表); 签名一律取结果槽的 mant^se(与 k_fld_t_fstp_t_rt_tp 一致)。
+ * ===================================================================== */
+
+/* 结果一律落 2 号读数槽; 余层弹进 4 号哨兵槽(内容不参与签名) */
+#define P8_BODY_S1(op)  "fldt (%[s1])\n\tfldt (%[s0])\n\t" op "\n\tfstpt (%[r])\n\tfstpt (%[d])"
+#define P8_BODY_D1(op)  "fldt (%[s1])\n\tfldt (%[s0])\n\t" op "\n\tfstpt (%[r])"
+#define P8_BODY_D2(op)  "fldt (%[s1])\n\tfldt (%[s0])\n\t" op "\n\tfstpt (%[r])\n\tfstpt (%[d])"
+#define P8_BODY_SC      "fldt (%[s0])\n\tfsincos\n\tfstpt (%[r])\n\tfstpt (%[d])"
+#define P8_BODY_PT      "fldt (%[s1])\n\tfldt (%[s0])\n\tfptan\n\tfstpt (%[d])\n\tfstpt (%[r])"
+
+/* sn: 指令前缀(fsin...); i: g_opinfo 下标; ASM: 整段 P8_BODY_* 拼好的字面量 */
+#define P8_TPS(sn, i, ASM)                                                  \
+    uint64_t k_##sn##_p64_tp(unsigned long long iters)                       \
+    {                                                                       \
+        X87_BEGIN();                                                        \
+        unsigned long long j;                                               \
+        const void *s1 = tput80(0, g_opinfo[i].smant, g_opinfo[i].sse);     \
+        const void *s0 = tput80(1, MANT_P64, M80_E(g_opinfo[i].ise));       \
+        void *rt = &g_t[2];                                                 \
+                                                                            \
+        for (j = 0; j < iters; j++)                                         \
+            __asm__ volatile(ASM                                            \
+                             : : [s1] "r"(s1), [s0] "r"(s0), [r] "r"(rt), [d] "r"(&g_t[4]) : "memory"); \
+        return tget_m(2) ^ (uint64_t)tget_s(2);                             \
+    }                                                                       \
+    uint64_t k_##sn##_p80_tp(unsigned long long iters)                       \
+    {                                                                       \
+        X87_BEGIN();                                                        \
+        unsigned long long j;                                               \
+        const void *s1 = tput80(0, g_opinfo[i].smant, g_opinfo[i].sse);     \
+        const void *s0 = tput80(1, MANT_P80, M80_E(g_opinfo[i].ise));       \
+        void *rt = &g_t[2];                                                 \
+                                                                            \
+        for (j = 0; j < iters; j++)                                         \
+            __asm__ volatile(ASM                                            \
+                             : : [s1] "r"(s1), [s0] "r"(s0), [r] "r"(rt), [d] "r"(&g_t[4]) : "memory"); \
+        return tget_m(2) ^ (uint64_t)tget_s(2);                             \
+    }
+
+
+/* ---- 13 条指令 x 2 档(表序与 g_opinfo 一致; 行末标形态) ---- */
+P8_TPS(fsin,    0, P8_BODY_S1("fsin"));                     /* S1 */
+P8_TPS(fcos,    1, P8_BODY_S1("fcos"));                     /* S1 */
+P8_TPS(fsqrt,   2, P8_BODY_S1("fsqrt"));                    /* S1 */
+P8_TPS(f2xm1,   3, P8_BODY_S1("f2xm1"));                    /* S1 */
+P8_TPS(fsincos, 4, P8_BODY_SC);                             /* SC */
+P8_TPS(fptan,   5, P8_BODY_PT);                             /* PT */
+P8_TPS(fpatan,  6, P8_BODY_D1("fpatan"));                   /* D1 */
+P8_TPS(fyl2x,   7, P8_BODY_D1("fyl2x"));                    /* D1 */
+P8_TPS(fyl2xp1, 8, P8_BODY_D1("fyl2xp1"));                  /* D1 */
+P8_TPS(fprem,   9, P8_BODY_D2("fprem"));                    /* D2 */
+P8_TPS(fprem1, 10, P8_BODY_D2("fprem1"));                   /* D2 */
+/* fdiv/fdivr 用显式弹栈形: 裸 `fdiv` 会被汇编器静默翻译成 fdivp(警告即此意),
+ * 弹栈语义正好是 D2 要的("结果+副"两格), 写显式形把这条翻译钉进源码。 */
+P8_TPS(fdiv,   11, P8_BODY_D2("fdivp %%st,%%st(1)"));       /* D2 */
+P8_TPS(fdivr,  12, P8_BODY_D2("fdivrp %%st,%%st(1)"));      /* D2 */
