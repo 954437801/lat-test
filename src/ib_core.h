@@ -208,9 +208,39 @@ static void ib_dbg_emit(const char *field, const char *label)
     fflush(stdout);
 }
 
+/* 本用例是否有任何一个"数据指标"被实际记录(latency/throughput/block8/diag 至少一列非空)。
+ * 关掉 --no-lat/--no-tput/--no-b8 后, 某用例可能一列数据都没跑 -> ib_flush 不再吐它的
+ * data 行(不删列, 只是"没测的用例不输出")。有状态但无值也算测过: ib_lat/ib_unsup 会写
+ * *_ST(HOSTUNSUPPORTED/CRASH 也非空), 故仍会输出。KAT/sem 不占数据列, 其判定走 func 段。 */
+static int ib_data_has_metric(void)
+{
+    static const int metric[] = { WV_LAT_ST, WV_LAT_NS, WV_TPUT_ST, WV_TPUT_OPS,
+                                  WV_TPUT_MBS, WV_B8_ST, WV_B8_NS,
+                                  WV_DIAG_ST, WV_DIAG_V, WV_DIAG_U };
+    unsigned i;
+    for (i = 0; i < sizeof metric / sizeof metric[0]; i++)
+        if (ib_wv[metric[i]][0] != '\0')
+            return 1;
+    return 0;
+}
+
+/* 性能段 field/label 表头是否已打: 延后到确有第一条数据行时打一次(见 ib_flush)。
+ * 若本次 --no-lat/--no-tput/--no-b8 把一个数据指标都没留下, 整个 data 段(含表头)
+ * 一行都不输出。列不删: 有数据时仍是固定全列。 */
+static int ib_data_hdr_done = 0;
+
 static void ib_flush(void)
 {
     ib_func_add(ib_wcase, ib_func_verdict());
+    if (!ib_data_has_metric()) {   /* 一个数据指标都没跑: 跳过本用例的 data 行 */
+        ib_wreset();
+        return;
+    }
+    if (!ib_data_hdr_done) {       /* 首条数据行前补打性能段表头(列保留, 全列) */
+        printf(IB_REC_FIELD "," IB_WIDE_FIELD "\n");
+        printf(IB_REC_LABEL "," IB_WIDE_LABEL "\n");
+        ib_data_hdr_done = 1;
+    }
     printf(IB_REC_DATA ",%s,%s,%s,%d,%.3f,%s,"
            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
            ib_wgrp[0] ? ib_wgrp : IB_V_NONE, g_abi, g_os,
@@ -327,8 +357,10 @@ void ib_hdr(const char *grp, int ncases)
     (void)grp; (void)ncases;
     if (g_list_cases)
         return;      /* --list 只列用例, 不吐表头 */
-    printf(IB_REC_FIELD "," IB_WIDE_FIELD "\n");
-    printf(IB_REC_LABEL "," IB_WIDE_LABEL "\n");
+    /* 性能段 field/label 不在此急打: 改由 ib_flush 在"确有第一条数据行"时打一次。
+     * 这样 --no-lat --no-tput --no-b8(一个数据指标都没跑)时, 整个 data 段连表头都不输出。
+     * 列不删: 只要有数据就是固定全列。func/dbg 段各自在 ib_done 打自己的表头。 */
+    ib_data_hdr_done = 0;
     ib_wreset();
     ib_fcnt = 0;
     ib_dbg_len = 0;
@@ -813,6 +845,10 @@ static int ib_case_kat(const char *grp, const ib_case *c)
                          ib_kfld[f], hi ? 'h' : 'l',
                          (unsigned long long)(pe[f] >> (hi ? 32 : 0)),
                          (unsigned long long)(pg[f] >> (hi ? 32 : 0)));
+            }
+            /* 调试增强: verify 模式下每个失败档都吐 exp+got(原只吐首个失败档);
+             * 判分/统计(det/ib_kat)逻辑不动, 仅扩大 dbg 观测面。 */
+            if (nfail == 1 || g_verify) {
                 ib_kline(grp, c, k, &c->kexp[k], "exp");
                 ib_kline(grp, c, k, &got, "got");
             }

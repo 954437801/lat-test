@@ -903,7 +903,7 @@ void k_fxam_kinds_kat(int kk, ib_kv *g)
     case 6:                                            /* 先压一项再标空: ST(0) 存在但无效 */
         FXA_ACT("fld1\n\tffree %%st(0)\n\t");
         break;
-    case 7:                                            /* fldt 直接装一个伪非规格化 m80 */
+    case 7:                                            /* fldt 直装 m80 非规格化(指数域=0、mant=0x4000…; 见 isb_x87.h 档 7 注) */
         FXA_ACT("fldt (%[v])\n\t");
         break;
     default:
