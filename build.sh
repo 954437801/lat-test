@@ -54,10 +54,12 @@ GRP_32ONLY="x87"
 ALL_FORMS="x64_linux i386_linux x64_windows i386_windows"
 # 按组专属形态覆盖: 列在 GRP_FORMS 里的组走 GRP_FORMS_<grp>(不并入 ALL_FORMS,
 # 以免 loongarch64 形态被推给只有 x86 源码、无法非 x86 编的其余 18 组)。
-# cfloat = C 数据类型算术延迟, cint = C 整数类型算术延迟; 均为自包含独立探针,
-# 三形态(i386/x64/loongarch64), 无 windows。
+# cfloat = C 数据类型算术延迟, cint = C 整数类型算术延迟; 均为自包含独立探针。
+# cfloat 四形态: i386/x64 Linux(原生 x86 参照) + loongarch64(龙芯原生基线)
+#   + i386_windows(.exe, 用于看 mingw/msvcrt 下 long double 的实际精度与 libm 行为)。
+# cint 仍三形态(纯整数, 无 libm/精度诉求, 不需要 windows)。
 GRP_FORMS="cfloat cint"
-GRP_FORMS_cfloat="i386_linux x64_linux loongarch64_linux"
+GRP_FORMS_cfloat="i386_linux i386_windows x64_linux loongarch64_linux"
 GRP_FORMS_cint="i386_linux x64_linux loongarch64_linux"
 
 forms_of() {

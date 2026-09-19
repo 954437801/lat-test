@@ -13,6 +13,12 @@
 TARGETS     ?=
 HEADERS     := src/ib_core.h src/ib_buf.h src/ib_fields.h src/ib_gen.h
 CFLAGS      := -O2 -static -msse2 -mno-avx -mno-avx2 -mno-fma
+# LDLIBS: cfloat 组引入 sinl/expl/logl/sqrtl/acosl 等 libm 调用 -> 最终链接需 -lm。
+# -lpthread: mingw-w64(msvcrt) 不提供 clock_gettime, 由 winpthreads 提供 shim
+#   (cfloat 探针 cf_now 用 CLOCK_MONOTONIC); -static 下烘进 exe, 不引入运行期 DLL。
+#   glibc(含 loongarch) 已把 pthread 并入 libc, -lpthread 为空桦, 无副作用。
+# 对象在库前 -> 追加在链接命令末尾。
+LDLIBS      := -lm -lpthread
 # loongarch64 形态专用 flags: 去掉 x86 专有的 -msse2/-mno-avx*(交叉编译器不认),
 # 只留 -O2 -static(cfloat 组的 loongarch64 原生基线二进制用)。
 LOONGFLAGS  := -O2 -static
@@ -69,7 +75,7 @@ $(TARGETS): $$(call srcs_of,$$(call grp_of,$$@)) $$(HEADERS) | dist/bin dist/lib
 	    $(call get_cc,$@) $(call get_flags,$@) -c $$s -o $$o || exit 1; \
 	done
 	@$(call get_ar,$@) rcs dist/lib/$(call dist_of,$@).a dist/bin/$(call dist_of,$@)_*.o
-	@$(call get_cc,$@) $(call get_flags,$@) dist/bin/$(call dist_of,$@)_*.o -o dist/bin/$(call dist_of,$@)$(call get_sfx,$@)
+	@$(call get_cc,$@) $(call get_flags,$@) dist/bin/$(call dist_of,$@)_*.o -o dist/bin/$(call dist_of,$@)$(call get_sfx,$@) $(LDLIBS)
 	@rm -f dist/bin/$(call dist_of,$@)_*.o
 	$(call verify_cmd,$(call dist_of,$@),$(call get_ar,$@))
 

@@ -152,23 +152,24 @@
  * kat 明细/diag 明细 全部拿掉 —— "对不对"由功能段(verify_<grp>)与详细段(debug_<grp>)
  * 单独承担, 不再混进性能表。
  * 注: 第 0 列(rec)由打印方用 IB_REC_FIELD/IB_REC_LABEL 占位, 不在本表序里重复声明。 */
+/* 分段 token: 供 ib_hdr()/ib_flush() 按 --no-lat/--no-tput/--no-b8 动态拼接列集
+ * (关掉的指标整列不输出); IB_WIDE_FIELD/LABEL 由它们拼成, 仍是单一来源不漂移。 */
+#define IB_FLD_ID   IB_F_GROUP "," IB_F_ABI "," IB_F_OS "," IB_F_BITS
+#define IB_LBL_ID   IB_L_GROUP "," IB_L_ABI "," IB_L_OS "," IB_L_BITS
+#define IB_FLD_LAT  IB_W_LATENCY IB_SUF_STATUS "," IB_W_LATENCY IB_SUF_NS
+#define IB_LBL_LAT  IB_LW_LATENCY IB_LS_STATUS "," IB_LW_LATENCY IB_LS_NS
+#define IB_FLD_TPUT IB_W_THROUGHPUT IB_SUF_STATUS "," IB_W_THROUGHPUT IB_SUF_OPS_S "," IB_W_THROUGHPUT IB_SUF_MB_S
+#define IB_LBL_TPUT IB_LW_THROUGHPUT IB_LS_STATUS "," IB_LW_THROUGHPUT IB_LS_OPS_S "," IB_LW_THROUGHPUT IB_LS_MB_S
+#define IB_FLD_B8   IB_W_BLOCK8 IB_SUF_STATUS "," IB_W_BLOCK8 IB_SUF_NS
+#define IB_LBL_B8   IB_LW_BLOCK8 IB_LS_STATUS "," IB_LW_BLOCK8 IB_LS_NS
+#define IB_FLD_DIAG IB_W_DIAG IB_SUF_STATUS "," IB_W_DIAG IB_SUF_VALUE "," IB_W_DIAG IB_SUF_UNIT
+#define IB_LBL_DIAG IB_LW_DIAG IB_LS_STATUS "," IB_LW_DIAG IB_LS_VALUE "," IB_LW_DIAG IB_LS_UNIT
+
 #define IB_WIDE_FIELD \
-    IB_F_GROUP "," IB_F_ABI "," IB_F_OS "," IB_F_BITS "," IB_F_WINDOW_SEC "," \
-    IB_F_CASE "," \
-    IB_W_LATENCY IB_SUF_STATUS "," IB_W_LATENCY IB_SUF_NS "," \
-    IB_W_THROUGHPUT IB_SUF_STATUS "," IB_W_THROUGHPUT IB_SUF_OPS_S "," \
-    IB_W_THROUGHPUT IB_SUF_MB_S "," \
-    IB_W_BLOCK8 IB_SUF_STATUS "," IB_W_BLOCK8 IB_SUF_NS "," \
-    IB_W_DIAG IB_SUF_STATUS "," IB_W_DIAG IB_SUF_VALUE "," IB_W_DIAG IB_SUF_UNIT
+    IB_FLD_ID "," IB_F_WINDOW_SEC "," IB_F_CASE "," IB_FLD_LAT "," IB_FLD_TPUT "," IB_FLD_B8 "," IB_FLD_DIAG
 
 #define IB_WIDE_LABEL \
-    IB_L_GROUP "," IB_L_ABI "," IB_L_OS "," IB_L_BITS "," IB_L_WINDOW_SEC "," \
-    IB_L_CASE "," \
-    IB_LW_LATENCY IB_LS_STATUS "," IB_LW_LATENCY IB_LS_NS "," \
-    IB_LW_THROUGHPUT IB_LS_STATUS "," IB_LW_THROUGHPUT IB_LS_OPS_S "," \
-    IB_LW_THROUGHPUT IB_LS_MB_S "," \
-    IB_LW_BLOCK8 IB_LS_STATUS "," IB_LW_BLOCK8 IB_LS_NS "," \
-    IB_LW_DIAG IB_LS_STATUS "," IB_LW_DIAG IB_LS_VALUE "," IB_LW_DIAG IB_LS_UNIT
+    IB_LBL_ID "," IB_L_WINDOW_SEC "," IB_L_CASE "," IB_LBL_LAT "," IB_LBL_TPUT "," IB_LBL_B8 "," IB_LBL_DIAG
 
 /* 功能段: 固定前缀(group/abi) + 各组功能名(探针按序自己打); 值 = true/false/- */
 #define IB_FUNC_FIELD     IB_F_GROUP "," IB_F_ABI
