@@ -971,9 +971,10 @@ void k_fninit_defaults_kat(int kk, ib_kv *g)
 /* =====================================================================
  * 8) P8 超越函数/除法精度边界(26 条)的 KAT 内核。
  *    入值口径与 lat/tp 完全同形(同指令序列、同槽位分配), 唯一差别 = 主尾数
- *    取 op_mant(stem,kk,base) 的 8 组扰动(高 52 位锁 base, 低 12 位哈希选图案)
- *    —— 被测机若把 m80 归一到 double 再算, p80 档丢的低 11 格必落进 o0 低格;
- *    p64 档同扰动但值在 double 内, 作对照组把"精度不足"与"实现不同"分开。
+ *    取 op_mant(stem,kk,base) 的 8 组扰动(共享高位 bit63..11 逐 kk 变化, 低 11 位
+ *    区分两档: f64=0、f80=1)
+ *    —— 被测机若把 m80 归一到 double 再算, f80 档丢的低 11 格必落进 o0 低格;
+ *    f64 档同一高位但低 11 格为 0(double 精确), 作对照组把"精度不足"与"实现不同"分开。
  *    判定字段: o0=结果 mant, o1=结果 se | (sw<<16), outf=EFLAGS(IB_FLG_MASK 后);
  *    fsincos 的 cos 占 o2/o3, fptan 的哨兵 1.0 也登记进 o2(mant 非 X1 即假实现)。
  *    sw 取在任何存回/弹栈之前(P6 纪律); 唯一例外是五形态里的弹栈结果已在 ST0,
@@ -1000,7 +1001,7 @@ static unsigned char p8buf[96];
 #define P8_RM(off)   (*(volatile uint64_t *)(p8buf + (off)))
 #define P8_RS(off)   (*(volatile uint16_t *)(p8buf + (off) + 8))
 
-/* sn: 指令前缀; i: g_opinfo 下标; sfx: "p64"/"p80"; ASM: 拼好的模板 */
+/* sn: 指令前缀; i: g_opinfo 下标; sfx: "f64"/"f80"; ASM: 拼好的模板 */
 #define P8_KAT(sn, i, sfx, base, ASM)                                       \
     void k_##sn##_##sfx##_kat(int kk, ib_kv *g)                             \
     {                                                                       \
@@ -1071,17 +1072,17 @@ static unsigned char p8buf[96];
 
 /* ---- 13 条指令 x 2 档(表序与 g_opinfo 一致; 模板与 lat/tp 同形) ---- */
 #define P8_KATPAIR(sn, i, ASM)                              \
-    P8_KAT(sn, i, p64, MANT_P64, ASM)                       \
-    P8_KAT(sn, i, p80, MANT_P80, ASM)
+    P8_KAT(sn, i, f64, MANT_F64, ASM)                       \
+    P8_KAT(sn, i, f80, MANT_F80, ASM)
 
 P8_KATPAIR(fsin,    0, P8_K_S1("fsin"));
 P8_KATPAIR(fcos,    1, P8_K_S1("fcos"));
 P8_KATPAIR(fsqrt,   2, P8_K_S1("fsqrt"));
 P8_KATPAIR(f2xm1,   3, P8_K_S1("f2xm1"));
-P8_KAT2(fsincos, 4, p64, MANT_P64, P8_K_SC)
-P8_KAT2(fsincos, 4, p80, MANT_P80, P8_K_SC)
-P8_KAT2(fptan,   5, p64, MANT_P64, P8_K_PT)
-P8_KAT2(fptan,   5, p80, MANT_P80, P8_K_PT)
+P8_KAT2(fsincos, 4, f64, MANT_F64, P8_K_SC)
+P8_KAT2(fsincos, 4, f80, MANT_F80, P8_K_SC)
+P8_KAT2(fptan,   5, f64, MANT_F64, P8_K_PT)
+P8_KAT2(fptan,   5, f80, MANT_F80, P8_K_PT)
 P8_KATPAIR(fpatan,  6, P8_K_D1("fpatan"));
 P8_KATPAIR(fyl2x,   7, P8_K_D1("fyl2x"));
 P8_KATPAIR(fyl2xp1, 8, P8_K_D1("fyl2xp1"));

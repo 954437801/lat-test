@@ -208,15 +208,19 @@ typedef struct { uint64_t mant; uint16_t se; } xb80;   /* m80real: 恰 10 字节
 
 /* ---- 超越函数/除法精度边界用例(P8)的两档尾数常量 ----
  * 被测命题: x87 值的有效位超出 double 时 LATX 翻译能否算准。两档共用同一
- * se(同数量级), 分界 = 尾数能否被 double 精确表示:
- *   p64 档: 整数位=1 + 小数高 11 格全 1 -> 仅 12 格有效, double(1+52) 装得下,
- *           且低位全 0 -> m80<->double 往返无损(对照组: 测 LATX 的 double 运算正确性);
- *   p80 档: 整数位=1 + 小数 63 格全 1 -> 需 64 位显式尾数, 过 double 必丢低 11 格。
- * 反验: MANT_P64 = 2^64-2^52(位 63..52 为 1、其余 0), 入值经 double 可无损往返;
- * MANT_P80 = 2^64-1 装不进 double 的 53 位有效位。 */
-#define MANT_P64 0xFFF0000000000000ULL               /* double 精确档尾数(低 12 格=0) */
+ * se(同数量级), 唯一分界 = 尾数能否被 double 精确表示(double = 53 位有效 =
+ * 1 整数位 + 52 小数位; m80 = 64 位显式尾数):
+ *   f64 档: 尾数用满 53 位有效(位 63..11 = 1, 低 11 位 = 0) -> 恰卡在 double
+ *           能精确表示的上界, m80<->double 往返无损(对照组: 测 LATX 拿 double
+ *           算得对不对);
+ *   f80 档: 尾数用满 64 位(位 63..0 = 1) -> 比 double 多出低 11 位, 过 double
+ *           必丢那 11 位(越界档)。
+ * 反验: MANT_F64 = 2^64-2^11(位 63..11 为 1、低 11 格为 0), 经 double 无损往返;
+ * MANT_F80 = 2^64-1 = MANT_F64|0x7FF, 低 11 位 = 1 装不进 double 的 53 位有效位。
+ * 两档只差低 11 位(0x7FF), 高位逐位相同 —— 精度差的干净对照。 */
+#define MANT_F64 0xFFFFFFFFFFFFF800ULL               /* double 精确档尾数(53 位有效, 低 11 格=0) */
 
-#define MANT_P80 0xFFFFFFFFFFFFFFFFULL               /* 超 double 精度档尾数(全 1) */
+#define MANT_F80 0xFFFFFFFFFFFFFFFFULL               /* 超 double 精度档尾数(64 位有效, 低 11 格=1) */
 
 #define M80_E(k) ((uint16_t)(16383 + (int)(k)))      /* m80 指数域(偏置 16383) */
 
@@ -673,10 +677,10 @@ static const uint16_t FDIRTY[IB_KAT_N] = {
 
 /* =====================================================================
  * 8) P8 超越函数/除法精度边界(26 条 = 13 指令 x 2 档尾数): 唯一变量 = 主操作数
- *    尾数是否超出 double(MANT_P64 对照 / MANT_P80 越界), 装载通路两档完全相同
+ *    尾数是否超出 double(MANT_F64 对照 / MANT_F80 越界), 装载通路两档完全相同
  *    (fldt/fstpt m80)。真值 = 真 x86 硬件 64 位显式尾数结果(gen_val.sh 采集);
- *    若 LATX 把 x87 栈值归一到 double 再算, p80 档的 o0/o1 必偏离真值 -> KATFAIL
- *    直接暴露; p64 档把"精度不足"与"该指令实现整体不同"分开(见计划"已知解读风险")。
+ *    若 LATX 把 x87 栈值归一到 double 再算, f80 档的 o0/o1 必偏离真值 -> KATFAIL
+ *    直接暴露; f64 档把"精度不足"与"该指令实现整体不同"分开(见计划"已知解读风险")。
  *    下表 13 行入值口径 lat/tp/kat 三处共用(避免写三遍漂移): ise = 主操作数指数档
  *    (M80_E(k) 的 k); 副操作数一律 double 可精确表示, 使精度变量只落在主操作数上;
  *    dual = 1 表示双源(副操作数参与运算, 先入栈落 ST1); drain = 每轮结束前还需
@@ -690,7 +694,7 @@ static const uint16_t FDIRTY[IB_KAT_N] = {
  *    哨兵 1.0 装进主槽(结果 tan 在倒数第二次 fstpt 处读)。
  * ===================================================================== */
 struct ib_opinfo {
-    const char *stem;    /* 词干前缀(fsin...), 与 _p64/_p80 拼出用例词干 */
+    const char *stem;    /* 词干前缀(fsin...), 与 _f64/_f80 拼出用例词干 */
     int ise;             /* 主操作数指数档: se = M80_E(ise) */
     uint64_t smant;      /* 副操作数尾数 */
     uint16_t sse;        /* 副操作数 se */
@@ -702,14 +706,15 @@ struct ib_opinfo {
 #define OPINFO_N 13
 extern const struct ib_opinfo g_opinfo[OPINFO_N];
 
-/* 精度边界用例的 8 组尾数扰动(落位就是两档的本质区别):
- *   p64: 扰动放到 double 可见区(位 23..12), 低 12 格恒 0 —— 入值必须能被 double
- *        精确表示, 本档才测得到"LATX 拿 double 算得对不对"(double 只丢尾数低 11 格,
- *        在丢位区内做任何扰动都会让装载值偏离真值 -> 测到的就变成精度不足而
- *        非算错);
- *   p80: 扰动静止在低位(位 11..0 XOR 翻), 入值仍超 double、仍丢低 11 格。
- * 两档同一 kk 拿到同一条 12 位变化量, 只是落位不同。
- * 注意不能用 x87n(): 它返回 24 位整数(给 qbits 转 double 位形用), 当不了 64 位尾数。 */
+/* 精度边界用例的 8 组尾数扰动(两档低 11 位的差别就是本质区别):
+ *   共享高位(位 63..11): bit63 整数位恒 1, bits62..11 由哈希每 kk 翻若干位(变化量左移
+ *     到 bit11 起, 不碰 bit63 与低 11 位) -> 两档同源、同一 kk 高位逐位相同;
+ *   f64: 低 11 位置 0 -> 入值恰卡在 double 精确表示的上界(53 位有效), 本档才测
+ *     得到"LATX 拿 double 算得对不对"(一旦在 double 装不下的低 11 位上放非 0 值,
+ *     两档就都变成"丢那 11 位", 分不出精度不足与实现不同);
+ *   f80: 同一高位 | 0x7FF(低 11 位全 1) -> 满 64 位尾数、超 double。
+ * 同一 kk 下两档严格只差 0x7FF 这 11 位。注意不能用 x87n(): 它返回 24 位整数
+ * (给 qbits 转 double 位形用), 当不了 64 位尾数。 */
 uint64_t op_mant(const char *stem, int kk, uint64_t base);
 
 
@@ -888,83 +893,83 @@ extern uint64_t k_fxam_kinds_lat(unsigned long long iters);
 extern uint64_t k_fstsw_allbits_lat(unsigned long long iters);
 extern uint64_t k_fninit_defaults_lat(unsigned long long iters);
 /* P8 超越函数/除法精度边界(13 指令 x 2 档尾数 = 26 用例, lat/tp/kat 各 26) */
-extern uint64_t k_fsin_p64_lat(unsigned long long iters);
-extern uint64_t k_fsin_p80_lat(unsigned long long iters);
-extern uint64_t k_fcos_p64_lat(unsigned long long iters);
-extern uint64_t k_fcos_p80_lat(unsigned long long iters);
-extern uint64_t k_fsqrt_p64_lat(unsigned long long iters);
-extern uint64_t k_fsqrt_p80_lat(unsigned long long iters);
-extern uint64_t k_f2xm1_p64_lat(unsigned long long iters);
-extern uint64_t k_f2xm1_p80_lat(unsigned long long iters);
-extern uint64_t k_fsincos_p64_lat(unsigned long long iters);
-extern uint64_t k_fsincos_p80_lat(unsigned long long iters);
-extern uint64_t k_fptan_p64_lat(unsigned long long iters);
-extern uint64_t k_fptan_p80_lat(unsigned long long iters);
-extern uint64_t k_fpatan_p64_lat(unsigned long long iters);
-extern uint64_t k_fpatan_p80_lat(unsigned long long iters);
-extern uint64_t k_fyl2x_p64_lat(unsigned long long iters);
-extern uint64_t k_fyl2x_p80_lat(unsigned long long iters);
-extern uint64_t k_fyl2xp1_p64_lat(unsigned long long iters);
-extern uint64_t k_fyl2xp1_p80_lat(unsigned long long iters);
-extern uint64_t k_fprem_p64_lat(unsigned long long iters);
-extern uint64_t k_fprem_p80_lat(unsigned long long iters);
-extern uint64_t k_fprem1_p64_lat(unsigned long long iters);
-extern uint64_t k_fprem1_p80_lat(unsigned long long iters);
-extern uint64_t k_fdiv_p64_lat(unsigned long long iters);
-extern uint64_t k_fdiv_p80_lat(unsigned long long iters);
-extern uint64_t k_fdivr_p64_lat(unsigned long long iters);
-extern uint64_t k_fdivr_p80_lat(unsigned long long iters);
-extern uint64_t k_fsin_p64_tp(unsigned long long iters);
-extern uint64_t k_fsin_p80_tp(unsigned long long iters);
-extern uint64_t k_fcos_p64_tp(unsigned long long iters);
-extern uint64_t k_fcos_p80_tp(unsigned long long iters);
-extern uint64_t k_fsqrt_p64_tp(unsigned long long iters);
-extern uint64_t k_fsqrt_p80_tp(unsigned long long iters);
-extern uint64_t k_f2xm1_p64_tp(unsigned long long iters);
-extern uint64_t k_f2xm1_p80_tp(unsigned long long iters);
-extern uint64_t k_fsincos_p64_tp(unsigned long long iters);
-extern uint64_t k_fsincos_p80_tp(unsigned long long iters);
-extern uint64_t k_fptan_p64_tp(unsigned long long iters);
-extern uint64_t k_fptan_p80_tp(unsigned long long iters);
-extern uint64_t k_fpatan_p64_tp(unsigned long long iters);
-extern uint64_t k_fpatan_p80_tp(unsigned long long iters);
-extern uint64_t k_fyl2x_p64_tp(unsigned long long iters);
-extern uint64_t k_fyl2x_p80_tp(unsigned long long iters);
-extern uint64_t k_fyl2xp1_p64_tp(unsigned long long iters);
-extern uint64_t k_fyl2xp1_p80_tp(unsigned long long iters);
-extern uint64_t k_fprem_p64_tp(unsigned long long iters);
-extern uint64_t k_fprem_p80_tp(unsigned long long iters);
-extern uint64_t k_fprem1_p64_tp(unsigned long long iters);
-extern uint64_t k_fprem1_p80_tp(unsigned long long iters);
-extern uint64_t k_fdiv_p64_tp(unsigned long long iters);
-extern uint64_t k_fdiv_p80_tp(unsigned long long iters);
-extern uint64_t k_fdivr_p64_tp(unsigned long long iters);
-extern uint64_t k_fdivr_p80_tp(unsigned long long iters);
-extern void k_fsin_p64_kat(int kk, ib_kv *g);
-extern void k_fsin_p80_kat(int kk, ib_kv *g);
-extern void k_fcos_p64_kat(int kk, ib_kv *g);
-extern void k_fcos_p80_kat(int kk, ib_kv *g);
-extern void k_fsqrt_p64_kat(int kk, ib_kv *g);
-extern void k_fsqrt_p80_kat(int kk, ib_kv *g);
-extern void k_f2xm1_p64_kat(int kk, ib_kv *g);
-extern void k_f2xm1_p80_kat(int kk, ib_kv *g);
-extern void k_fsincos_p64_kat(int kk, ib_kv *g);
-extern void k_fsincos_p80_kat(int kk, ib_kv *g);
-extern void k_fptan_p64_kat(int kk, ib_kv *g);
-extern void k_fptan_p80_kat(int kk, ib_kv *g);
-extern void k_fpatan_p64_kat(int kk, ib_kv *g);
-extern void k_fpatan_p80_kat(int kk, ib_kv *g);
-extern void k_fyl2x_p64_kat(int kk, ib_kv *g);
-extern void k_fyl2x_p80_kat(int kk, ib_kv *g);
-extern void k_fyl2xp1_p64_kat(int kk, ib_kv *g);
-extern void k_fyl2xp1_p80_kat(int kk, ib_kv *g);
-extern void k_fprem_p64_kat(int kk, ib_kv *g);
-extern void k_fprem_p80_kat(int kk, ib_kv *g);
-extern void k_fprem1_p64_kat(int kk, ib_kv *g);
-extern void k_fprem1_p80_kat(int kk, ib_kv *g);
-extern void k_fdiv_p64_kat(int kk, ib_kv *g);
-extern void k_fdiv_p80_kat(int kk, ib_kv *g);
-extern void k_fdivr_p64_kat(int kk, ib_kv *g);
-extern void k_fdivr_p80_kat(int kk, ib_kv *g);
+extern uint64_t k_fsin_f64_lat(unsigned long long iters);
+extern uint64_t k_fsin_f80_lat(unsigned long long iters);
+extern uint64_t k_fcos_f64_lat(unsigned long long iters);
+extern uint64_t k_fcos_f80_lat(unsigned long long iters);
+extern uint64_t k_fsqrt_f64_lat(unsigned long long iters);
+extern uint64_t k_fsqrt_f80_lat(unsigned long long iters);
+extern uint64_t k_f2xm1_f64_lat(unsigned long long iters);
+extern uint64_t k_f2xm1_f80_lat(unsigned long long iters);
+extern uint64_t k_fsincos_f64_lat(unsigned long long iters);
+extern uint64_t k_fsincos_f80_lat(unsigned long long iters);
+extern uint64_t k_fptan_f64_lat(unsigned long long iters);
+extern uint64_t k_fptan_f80_lat(unsigned long long iters);
+extern uint64_t k_fpatan_f64_lat(unsigned long long iters);
+extern uint64_t k_fpatan_f80_lat(unsigned long long iters);
+extern uint64_t k_fyl2x_f64_lat(unsigned long long iters);
+extern uint64_t k_fyl2x_f80_lat(unsigned long long iters);
+extern uint64_t k_fyl2xp1_f64_lat(unsigned long long iters);
+extern uint64_t k_fyl2xp1_f80_lat(unsigned long long iters);
+extern uint64_t k_fprem_f64_lat(unsigned long long iters);
+extern uint64_t k_fprem_f80_lat(unsigned long long iters);
+extern uint64_t k_fprem1_f64_lat(unsigned long long iters);
+extern uint64_t k_fprem1_f80_lat(unsigned long long iters);
+extern uint64_t k_fdiv_f64_lat(unsigned long long iters);
+extern uint64_t k_fdiv_f80_lat(unsigned long long iters);
+extern uint64_t k_fdivr_f64_lat(unsigned long long iters);
+extern uint64_t k_fdivr_f80_lat(unsigned long long iters);
+extern uint64_t k_fsin_f64_tp(unsigned long long iters);
+extern uint64_t k_fsin_f80_tp(unsigned long long iters);
+extern uint64_t k_fcos_f64_tp(unsigned long long iters);
+extern uint64_t k_fcos_f80_tp(unsigned long long iters);
+extern uint64_t k_fsqrt_f64_tp(unsigned long long iters);
+extern uint64_t k_fsqrt_f80_tp(unsigned long long iters);
+extern uint64_t k_f2xm1_f64_tp(unsigned long long iters);
+extern uint64_t k_f2xm1_f80_tp(unsigned long long iters);
+extern uint64_t k_fsincos_f64_tp(unsigned long long iters);
+extern uint64_t k_fsincos_f80_tp(unsigned long long iters);
+extern uint64_t k_fptan_f64_tp(unsigned long long iters);
+extern uint64_t k_fptan_f80_tp(unsigned long long iters);
+extern uint64_t k_fpatan_f64_tp(unsigned long long iters);
+extern uint64_t k_fpatan_f80_tp(unsigned long long iters);
+extern uint64_t k_fyl2x_f64_tp(unsigned long long iters);
+extern uint64_t k_fyl2x_f80_tp(unsigned long long iters);
+extern uint64_t k_fyl2xp1_f64_tp(unsigned long long iters);
+extern uint64_t k_fyl2xp1_f80_tp(unsigned long long iters);
+extern uint64_t k_fprem_f64_tp(unsigned long long iters);
+extern uint64_t k_fprem_f80_tp(unsigned long long iters);
+extern uint64_t k_fprem1_f64_tp(unsigned long long iters);
+extern uint64_t k_fprem1_f80_tp(unsigned long long iters);
+extern uint64_t k_fdiv_f64_tp(unsigned long long iters);
+extern uint64_t k_fdiv_f80_tp(unsigned long long iters);
+extern uint64_t k_fdivr_f64_tp(unsigned long long iters);
+extern uint64_t k_fdivr_f80_tp(unsigned long long iters);
+extern void k_fsin_f64_kat(int kk, ib_kv *g);
+extern void k_fsin_f80_kat(int kk, ib_kv *g);
+extern void k_fcos_f64_kat(int kk, ib_kv *g);
+extern void k_fcos_f80_kat(int kk, ib_kv *g);
+extern void k_fsqrt_f64_kat(int kk, ib_kv *g);
+extern void k_fsqrt_f80_kat(int kk, ib_kv *g);
+extern void k_f2xm1_f64_kat(int kk, ib_kv *g);
+extern void k_f2xm1_f80_kat(int kk, ib_kv *g);
+extern void k_fsincos_f64_kat(int kk, ib_kv *g);
+extern void k_fsincos_f80_kat(int kk, ib_kv *g);
+extern void k_fptan_f64_kat(int kk, ib_kv *g);
+extern void k_fptan_f80_kat(int kk, ib_kv *g);
+extern void k_fpatan_f64_kat(int kk, ib_kv *g);
+extern void k_fpatan_f80_kat(int kk, ib_kv *g);
+extern void k_fyl2x_f64_kat(int kk, ib_kv *g);
+extern void k_fyl2x_f80_kat(int kk, ib_kv *g);
+extern void k_fyl2xp1_f64_kat(int kk, ib_kv *g);
+extern void k_fyl2xp1_f80_kat(int kk, ib_kv *g);
+extern void k_fprem_f64_kat(int kk, ib_kv *g);
+extern void k_fprem_f80_kat(int kk, ib_kv *g);
+extern void k_fprem1_f64_kat(int kk, ib_kv *g);
+extern void k_fprem1_f80_kat(int kk, ib_kv *g);
+extern void k_fdiv_f64_kat(int kk, ib_kv *g);
+extern void k_fdiv_f80_kat(int kk, ib_kv *g);
+extern void k_fdivr_f64_kat(int kk, ib_kv *g);
+extern void k_fdivr_f80_kat(int kk, ib_kv *g);
 
 #endif /* ISB_X87_H */

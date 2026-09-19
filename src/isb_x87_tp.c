@@ -873,8 +873,8 @@ uint64_t k_fninit_defaults_tp(unsigned long long iters)
  * 8) P8 超越函数/除法精度边界(26 条 = 13 指令 x 2 档尾数)的定时长体。
  *    每轮固定形态: 边界值走 fldt/fstpt m80 通路、源槽只读每轮重灌(输入恒定,
  *    不因自串收敛成 0/denormal/inf), 栈深每轮回到 X87_BEGIN 后的 0(drain 列)。
- *    p64/p80 两档共用同一指数档与同一副操作数, 唯一变量 = 主尾数低 12 格是否
- *    为 0(MANT_P64/MANT_P80) —— 定时长不做判定, 入值取固定 base 不扰动。
+ *    f64/f80 两档共用同一指数档与同一副操作数, 唯一变量 = 主尾数低 11 格是否
+ *    为 0(MANT_F64=53 位有效/低 11 格 0、MANT_F80=64 位有效) —— 定时长不做判定, 入值取固定 base 不扰动。
  *    五种栈形态(按被测指令的压栈/弹栈语义逐条算定, 见 g_opinfo 表; ASM 参数是
  *    整段拼好的字面量 —— 运行时字符串拼不进 __asm__ 模板, 共享核方案已否):
  *      S1  单源不弹(fsin/fcos/fsqrt/f2xm1): 主结果在 ST0, 另有一格哨兵 1.0 陪衬;
@@ -894,12 +894,12 @@ uint64_t k_fninit_defaults_tp(unsigned long long iters)
 
 /* sn: 指令前缀(fsin...); i: g_opinfo 下标; ASM: 整段 P8_BODY_* 拼好的字面量 */
 #define P8_TPS(sn, i, ASM)                                                  \
-    uint64_t k_##sn##_p64_tp(unsigned long long iters)                       \
+    uint64_t k_##sn##_f64_tp(unsigned long long iters)                       \
     {                                                                       \
         X87_BEGIN();                                                        \
         unsigned long long j;                                               \
         const void *s1 = tput80(0, g_opinfo[i].smant, g_opinfo[i].sse);     \
-        const void *s0 = tput80(1, MANT_P64, M80_E(g_opinfo[i].ise));       \
+        const void *s0 = tput80(1, MANT_F64, M80_E(g_opinfo[i].ise));       \
         void *rt = &g_t[2];                                                 \
                                                                             \
         for (j = 0; j < iters; j++)                                         \
@@ -907,12 +907,12 @@ uint64_t k_fninit_defaults_tp(unsigned long long iters)
                              : : [s1] "r"(s1), [s0] "r"(s0), [r] "r"(rt), [d] "r"(&g_t[4]) : "memory"); \
         return tget_m(2) ^ (uint64_t)tget_s(2);                             \
     }                                                                       \
-    uint64_t k_##sn##_p80_tp(unsigned long long iters)                       \
+    uint64_t k_##sn##_f80_tp(unsigned long long iters)                       \
     {                                                                       \
         X87_BEGIN();                                                        \
         unsigned long long j;                                               \
         const void *s1 = tput80(0, g_opinfo[i].smant, g_opinfo[i].sse);     \
-        const void *s0 = tput80(1, MANT_P80, M80_E(g_opinfo[i].ise));       \
+        const void *s0 = tput80(1, MANT_F80, M80_E(g_opinfo[i].ise));       \
         void *rt = &g_t[2];                                                 \
                                                                             \
         for (j = 0; j < iters; j++)                                         \
