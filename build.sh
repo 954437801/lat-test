@@ -41,12 +41,24 @@ if [ -n "$need" ]; then
     exit 1
 fi
 
+# loongarch64 交叉工具链为**可选**(仅 cfloat 组的 loongarch64 形态需要):
+# 缺则 forms_of() 自动跳过 loongarch64 形态, 不 fail 整构(其余 x86 形态照常)。
+HAVE_LOONG=0
+command -v loongarch64-linux-gnu-gcc >/dev/null && HAVE_LOONG=1
+
 # ---------- 3. 组形态矩阵 ----------
 ALL_GRPS="scalar sse avx crypto cpuid timer \
           mov alu logic flag shift cc ctrl bits special vec x87 \
-          pmul"
+          pmul cfloat cint"
 GRP_32ONLY="x87"
 ALL_FORMS="x64_linux i386_linux x64_windows i386_windows"
+# 按组专属形态覆盖: 列在 GRP_FORMS 里的组走 GRP_FORMS_<grp>(不并入 ALL_FORMS,
+# 以免 loongarch64 形态被推给只有 x86 源码、无法非 x86 编的其余 18 组)。
+# cfloat = C 数据类型算术延迟, cint = C 整数类型算术延迟; 均为自包含独立探针,
+# 三形态(i386/x64/loongarch64), 无 windows。
+GRP_FORMS="cfloat cint"
+GRP_FORMS_cfloat="i386_linux x64_linux loongarch64_linux"
+GRP_FORMS_cint="i386_linux x64_linux loongarch64_linux"
 
 forms_of() {
     local g="$1" t out="" fs
@@ -54,10 +66,21 @@ forms_of() {
         *" $g "*) fs="i386_linux i386_windows" ;;
         *)        fs="$ALL_FORMS" ;;
     esac
+    case " $GRP_FORMS " in
+        *" $g "*) eval "fs=\$GRP_FORMS_$g" ;;
+    esac
     for t in $fs; do
         if [ "$WITH32" = 0 ]; then
             case "$t" in i386_*) continue ;; esac
         fi
+        # loongarch64 形态需交叉工具链在位, 缺则跳过并提示(不 fail 整构)
+        case "$t" in
+            loongarch64_*)
+                if [ "$HAVE_LOONG" = 0 ]; then
+                    echo "  注: 缺 loongarch64-linux-gnu-gcc, 跳过 $g-$t 形态" >&2
+                    continue
+                fi ;;
+        esac
         out="$out $t"
     done
     echo $out

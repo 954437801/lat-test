@@ -38,12 +38,14 @@ DEF_DB = os.path.join(RES, "isbench.db")
 # 成本结构 + 风险隔离(栈类/串类/原子类各自成组, 一崩不拖全族), 详见 README。
 GROUPS = ["scalar", "sse", "avx", "crypto", "cpuid", "timer",
           "mov", "alu", "logic", "flag", "shift", "cc", "ctrl", "bits",
-          "special", "vec", "x87", "pmul"]
-# 组的 ABI 在册范围(与 build.sh 的 GRP_32ONLY 同集): 缺省两 ABI 都在, 未列就按全集。
+          "special", "vec", "x87", "pmul", "cfloat", "cint"]
+# 组的 ABI 在册范围(与 build.sh 的 GRP_32ONLY / GRP_FORMS 同集): 缺省两 ABI 都在, 未列就按全集。
 # x87 是唯一例外 —— 只有 -m32 的编译器会发射 x87 整型搬运, 给 x64 造 x87
 # 探针是测一条不存在的路径; 而实测(见 src/isb_x87.c 取证 6)它编得出、跑得通、还
 # 与 i386 逐字一致 => 运行期根本看不出不妥, 只能在登记层就限死。
-GRP_ABIS = {"x87": ("i386",)}
+# cfloat/cint 是三形态组: x64/i386 为 x86-under-LATX 对照, loongarch64 为原生基线。
+GRP_ABIS = {"x87": ("i386",), "cfloat": ("x64", "i386", "loongarch64"),
+            "cint": ("x64", "i386", "loongarch64")}
 ALL_ABIS = ("x64", "i386")
 # 身份列全组统一 cname: pmul 的用例身份 = "<实现>/<档族>"(如 hw/bit), 由探针打成一个
 # cname 单元 —— 不再为 pmul 单开 (impl,family) 二维键。三族表主键都是
@@ -64,7 +66,7 @@ WARM_SENT = {"scalar": "x86_add_r64", "sse": "sse_movups_ld",
              "shift": "x86_shl__r_i_l", "cc": "x86_jne___",
              "ctrl": "x86_leave___", "bits": "x86_bt__r_i_l",
              "special": "x86_nop", "vec": "sse2_psrlw",
-             "x87": "x87_fild_fistp_q_rt", "pmul": "p00"}
+             "x87": "x87_fild_fistp_q_rt", "pmul": "p00", "cfloat": "f32_add", "cint": "i32_add"}
 # 一致性自校验哨兵(只收两 ABI 都在册的组)。
 CHECK_SENT = [("scalar", "x86_add_r64"), ("crypto", "aesenc"),
               ("mov", "x86_mov__r_r_l"), ("alu", "x86_add__r_r_l")]
@@ -1199,7 +1201,7 @@ def do_run(args):
     mode = args.mode
     groups = args.groups or list(GROUPS)
     abi = args.abi or "all"
-    if abi not in ("x64", "i386", "all"):
+    if abi not in ("x64", "i386", "loongarch64", "all"):
         eprint("非法 --abi: %s" % abi)
         sys.exit(2)
     reps = args.reps or 1
@@ -1231,7 +1233,9 @@ def do_run(args):
         wcmd = _sh("command -v kylin-wine 2>/dev/null") or \
                _sh("command -v wine 2>/dev/null")
     env0 = dict(os.environ)
-    abi_list = ["x64", "i386"] if abi == "all" else [abi]
+    # loongarch64 只在 abi_scope 含它的组(目前只 cfloat)才会真正进入;
+    # 其余组因 abi_scope 默认 (x64,i386) 在下方被静默跳过。
+    abi_list = (["x64", "i386", "loongarch64"] if abi == "all" else [abi])
     agg_rows, notes, dones = [], [], []
     v_rows, f_rows = [], []   # 详细明细行(dbg) / 功能结果行(func)
     dbg_arg = ["--debug"] if getattr(args, "debug", False) else []
@@ -1245,6 +1249,10 @@ def do_run(args):
                 # 也不允许反向"修": 实测拿 x64 编一份 x87 探针它跑得通还全绿
                 # (见 isb_x87.c 取证 6), 所以护栏在源码 #error 与 build.sh 的
                 # GRP_32ONLY, 不在这里。
+                continue
+            # loongarch64 原生二进制只能在 loongarch64 机上跑(非 x86 主机直执
+            # 行会 Exec format error); 非本机时静默跳过, 不当缺件告警。
+            if a == "loongarch64" and not is_loong:
                 continue
             # WSL i386 已能采集: wine/native/latx 统一跑 _linux ELF(不绕 .exe)
             if mode in ("native", "latx", "wine"):
@@ -1262,6 +1270,11 @@ def do_run(args):
                 tr = os.environ.get("LATX64" if a == "x64" else "LATX32")
                 if tr:
                     prefix = [tr] + shlex.split(os.environ.get("LATX_OPTS", ""))
+            if a == "loongarch64":
+                # loongarch64 是原生参照二进制(cfloat 组), 不经 wine/translator 前缀,
+                # 无论 mode 如何都直接本机执行(上方已保证只在 is_loong 时到达此处)。
+                prefix = []
+                env = None
             need_latx_tr = (mode == "latx" and not is_loong
                             and not os.environ.get(
                                 "LATX64" if a == "x64" else "LATX32"))

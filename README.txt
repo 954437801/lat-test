@@ -100,6 +100,20 @@ isbench —— 企业微信 libcef 指令形态跨环境基准(py3 + sqlite3 宽
     _tmp/gen_val.sh 的 GRP_32ONLY; 对账挂 _tmp/sent_chk.sh(它还会反向验 x86_64 编不过)
     x87 也不进 CHECK_SENT(一致性自校验): 它只在一个 ABI 在册, 而自校验按两 ABI 查
     lat -> 必在 x86_64 侧静默落空(就是 mov/alu/logic 踩过的那个坑)
+    cfloat C 数据类型算术延迟组(三形态 i386/x64/loongarch64): 纯 C 通用类型名
+    float(32)/double(64)/long double(80)/__float128(128) 各做加减乘除的依赖链延迟,
+    共 16 个 lat 用例(f32_add ... f128_div)。本组无吞吐/无功能(不建 verify_cfloat)/
+    无 8 链/无 sem, 且是**自包含独立探针** —— ib_core.h/ib_buf.h 含 x86intrin/avx attr/
+    pushfq 等在 loongarch64 交叉编译器下不可编, 故本组只 include 纯宏的 ib_fields.h、
+    自带 clock_gettime 计时与 data 协议输出, 直接落同库独立表 bench_cfloat。
+    用途: loongarch64 原生二进制作 LoongArch 本机基线, i386/x64 二进制 under-LATX
+    作翻译对照。loongarch64 形态需 loongarch64-linux-gnu-gcc(缺则 build.sh 自动跳过)。
+    cint C 整数类型算术延迟组(与 cfloat 同构, 三形态 i386/x64/loongarch64): 纯 C 通用
+    无符号类型名 uint8_t(8)/uint16_t(16)/uint32_t(32)/uint64_t(64)/unsigned __int128(128)
+    各做加减乘除的依赖链延迟。64 位形态(x64/loongarch64) 20 个 lat 用例(i8_add ... i128_div);
+    i386 无 __int128, 靠 __SIZEOF_INT128__ 门控自动降到 16 条。用无符号避开有符号溢出 UB;
+    128 位 mul/div 走 libgcc 软件例程(__multi3/__udivti3), 与 cfloat 的 f128 对偶。同样为自包含探针。
+    两个新组的 loongarch64 交叉编译统一走 build-loongarch.sh(自动备工具链)。
     pmul 多项式乘法实现对照组(两 ABI 均在册): 同一次 64x64->128 无进位乘的
     多实现同 run 对照(base/ref/hw/t4/t8); 用例 = (实现, 档族) 二维, 故入库键
     与其余组不同(impl/family 代替 cname), 列名全由本组自打的 field 行决定。

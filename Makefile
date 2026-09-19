@@ -13,6 +13,9 @@
 TARGETS     ?=
 HEADERS     := src/ib_core.h src/ib_buf.h src/ib_fields.h src/ib_gen.h
 CFLAGS      := -O2 -static -msse2 -mno-avx -mno-avx2 -mno-fma
+# loongarch64 形态专用 flags: 去掉 x86 专有的 -msse2/-mno-avx*(交叉编译器不认),
+# 只留 -O2 -static(cfloat 组的 loongarch64 原生基线二进制用)。
+LOONGFLAGS  := -O2 -static
 
 # ==== 工具链(按形态区分) ====
 CC_x64_linux      := gcc
@@ -23,6 +26,8 @@ CC_x64_windows     := x86_64-w64-mingw32-gcc
 AR_x64_windows     := x86_64-w64-mingw32-ar
 CC_i386_windows       := i686-w64-mingw32-gcc
 AR_i386_windows       := i686-w64-mingw32-ar
+CC_loongarch64_linux  := loongarch64-linux-gnu-gcc
+AR_loongarch64_linux  := loongarch64-linux-gnu-ar
 
 # ==== 辅助函数 ====
 # $(1) = 目标名 (如 scalar-x64_linux)
@@ -34,7 +39,7 @@ dist_of  = $(DIST_$(1))
 is_win   = $(filter %_windows,$(call form_of,$(1)))
 get_cc   = $(CC_$(call form_of,$(1)))
 get_ar   = $(AR_$(call form_of,$(1)))
-get_flags = $(if $(filter i386_%,$(call form_of,$(1))),$(CFLAGS) -m32,$(CFLAGS))
+get_flags = $(if $(filter i386_%,$(call form_of,$(1))),$(CFLAGS) -m32,$(if $(filter loongarch64_%,$(call form_of,$(1))),$(LOONGFLAGS),$(CFLAGS)))
 get_sfx  = $(if $(call is_win,$(1)),.exe,)
 # 每组源文件(默认单文件 src/isb_<grp>.c; 统一构建组也走单入口)
 srcs_of  = $(if $(SRCS_$(1)),$(SRCS_$(1)),src/isb_$(1).c)

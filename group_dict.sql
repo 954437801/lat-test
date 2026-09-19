@@ -26,7 +26,9 @@ INSERT OR IGNORE INTO group_dict VALUES
 ('special', '特殊/杂项指令', 'CPUID/UD2/INT3/NOP/XCHG/LFENCE/SFENCE/MFENCE 等不宜归类的指令', 'run_id,abi,grp,cname,rep_n + 动态度量列'),
 ('vec', '向量/多媒体指令', 'MMX/XMM 混合: PACKSSDW/PMULLW/PUNPCK 等; 非纯 SSE 族', 'run_id,abi,grp,cname,rep_n + 动态度量列'),
 ('x87', 'x87 FPU 指令', '传统 x87 浮点: FILD/FISTP/FADD/FMUL/FSIN/FCOS 等; 只 i386 在册', 'run_id,abi,grp,cname,rep_n + 动态度量列'),
-('pmul', '多项式乘法实现对照', '同一次 64x64->128 无进位乘的多实现同 run 对照: base/ref/hw/t4/t8; 每行 = 一个 (实现,档族), cname = "<实现>/<档族>"', 'run_id,abi,grp,cname,rep_n + 动态度量列(<档>_ns/<档>_ops_s)');
+('pmul', '多项式乘法实现对照', '同一次 64x64->128 无进位乘的多实现同 run 对照: base/ref/hw/t4/t8; 每行 = 一个 (实现,档族), cname = "<实现>/<档族>"', 'run_id,abi,grp,cname,rep_n + 动态度量列(<档>_ns/<档>_ops_s)'),
+('cfloat', 'C 数据类型算术延迟', '纯 C 的 float(32)/double(64)/long double(80)/__float128(128) 各做加减乘除的依赖链延迟(16 用例, 仅 lat); 三形态 i386/x64/loongarch64 共存: loongarch64 为原生基线, x86 为 under-LATX 对照。自包含独立探针(不依赖 x86 专有的 ib_core.h)', 'run_id,abi,grp,cname,rep_n + 动态度量列(latency_ns)'),
+('cint', 'C 整数类型算术延迟', '纯 C 的 uint8_t(8)/uint16_t(16)/uint32_t(32)/uint64_t(64)/unsigned __int128(128) 各做加减乘除的依赖链延迟(64 位形态 20 用例; i386 无 __int128 自动降 16; 仅 lat; 用无符号避开有符号溢出 UB); 三形态 i386/x64/loongarch64 共存。与 cfloat 同构的自包含独立探针', 'run_id,abi,grp,cname,rep_n + 动态度量列(latency_ns)');
 
 -- LATX 翻译器环境变量(采集自 env_wide.latx_* 列)
 INSERT OR IGNORE INTO group_dict VALUES
