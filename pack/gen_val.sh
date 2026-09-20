@@ -1,10 +1,10 @@
 #!/bin/bash
 # gen_val.sh <grp> [iters] [time_ms] —— 统一功能真值采集(本地真 x86)
 #
-# 合并原 _tmp/gen_kat.sh(采集 K 行)与 pmul/gen_gold.sh(探针自出表)的思路, 统一为:
+# 合并早期采集脚本(采集 K 行)与 pack/gen_gold_pmul.sh(探针自出表)的思路, 统一为:
 #   1) 编 isb_<grp>.c 的 x86_64-linux 采集版;
 #   2) 跑 `<探针> --gen-gold` —— 探针忽略现表, 逐 (用例,槽) 把 got 打成 dbg 段;
-#   3) 收割 dbg/src=got 行 -> 生成 src/isb_<grp>_kat.h(每词干一个 #define 列表).
+#   3) 收割 dbg/src=got 行 -> 生成 src/<grp>/isb_<grp>_kat.h(每词干一个 #define 列表).
 #
 # 口径(功能测试标准 §2/§5):
 #   - 真值单元 = 10 字: i0,i1,i2,i3,inf,o0,o1,o2,o3,outf(见 ib_core.h ib_kv);
@@ -21,7 +21,7 @@ SRC="${SRC:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../src" && pwd)}"
 CF="-O2 -static -msse2 -mno-avx -mno-avx2 -mno-fma"
 N=8
 cd "$SRC"
-# WSL i386 ELF 已能采集: 统一用 gcc 编 ELF(不再绕 Windows PE)
+# i386 ELF 已能采集: 统一用 gcc 编 ELF(不再绕 Windows PE)
 # x87 组必须 i386 编译(源码 #error 限制), 其他组用 x86_64
 if [ "$g" = "x87" ]; then
     CCD="gcc"; CFLAGS_EXTRA="-m32"; SFX=""; OUTDIR="/tmp"
@@ -31,7 +31,7 @@ fi
 BIN="$OUTDIR/gv_${g}${SFX}"
 CSV="$OUTDIR/gv_${g}.csv"
 
-$CCD $CF $CFLAGS_EXTRA -Wall -o "$BIN" "isb_$g.c" 2>"/tmp/gv_${g}.build.log" || {
+$CCD $CF $CFLAGS_EXTRA -I"$SRC" -Wall -o "$BIN" "$g/isb_$g.c" 2>"/tmp/gv_${g}.build.log" || {
     echo "FAIL: 采集版编译失败, 见 /tmp/gv_${g}.build.log"; head -20 "/tmp/gv_${g}.build.log"; exit 1; }
 # 退出码不参与判定(有些组把全绿用例数当退出码), 吃下它
 "$BIN" --gen-gold --iters "$IT" --time "$TM" > "$CSV" 2>&1 || true
@@ -95,16 +95,16 @@ nr=$(grep -c '^    {' "/tmp/isb_${g}_kat.plain")
 cr=$(tr -dc '\r' < "/tmp/isb_${g}_kat.plain" | wc -c)
 [ "$cr" = 0 ] || { echo "FAIL: 生成物带 $cr 个 CR(本仓 LF) -> 不覆盖旧表"; exit 1; }
 
-[ -f "$SRC/isb_${g}_kat.h" ] && cp "$SRC/isb_${g}_kat.h" "/tmp/gv_${g}_bak.h"
-cp "/tmp/isb_${g}_kat.plain" "$SRC/isb_${g}_kat.h"
-echo "已回填 $SRC/isb_${g}_kat.h 词干=$ns 行数=$(wc -l < "$SRC/isb_${g}_kat.h") (旧表备份 /tmp/gv_${g}_bak.h)"
+[ -f "$SRC/$g/isb_${g}_kat.h" ] && cp "$SRC/$g/isb_${g}_kat.h" "/tmp/gv_${g}_bak.h"
+cp "/tmp/isb_${g}_kat.plain" "$SRC/$g/isb_${g}_kat.h"
+echo "已回填 $SRC/$g/isb_${g}_kat.h 词干=$ns 行数=$(wc -l < "$SRC/$g/isb_${g}_kat.h") (旧表备份 /tmp/gv_${g}_bak.h)"
 if [ -f "/tmp/gv_${g}_bak.h" ]; then
     # 逐字节相同 = 幂等(同一台真机重跑必同)
-    cmp -s "/tmp/gv_${g}_bak.h" "$SRC/isb_${g}_kat.h" && echo "注: 与旧表逐字节相同(幂等)" || echo "注: 与旧表不同(新口径/首采)"
+    cmp -s "/tmp/gv_${g}_bak.h" "$SRC/$g/isb_${g}_kat.h" && echo "注: 与旧表逐字节相同(幂等)" || echo "注: 与旧表不同(新口径/首采)"
 fi
 
 echo "== 复编该组 + 看 kat 是否转 OK =="
-$CCD $CF $CFLAGS_EXTRA -o "$OUTDIR/gv_${g}_v${SFX}" "isb_$g.c" || { echo "FAIL: 回填后编译不过"; exit 1; }
+$CCD $CF $CFLAGS_EXTRA -I"$SRC" -o "$OUTDIR/gv_${g}_v${SFX}" "$g/isb_$g.c" || { echo "FAIL: 回填后编译不过"; exit 1; }
 "$OUTDIR/gv_${g}_v${SFX}" --iters "$IT" --time "$TM" > "/tmp/gv_${g}_v.csv" 2>&1 || true
 nfail=$(grep -c 'KATFAIL' "/tmp/gv_${g}_v.csv" || true)
 nok=$(awk -F, '$1=="data"{next} END{}' /dev/null; grep -o 'OK' "/tmp/gv_${g}_v.csv" | wc -l)

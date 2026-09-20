@@ -1,5 +1,4 @@
 /GNUmakefile
-/build/
 *.pyc
 .sdk
 .stgit-*
@@ -13,14 +12,19 @@ GTAGS
 *~
 *.ast_raw
 *.depend_raw
-build*/
 *.swp
 compile_commands.json
 .ccls_cache/
 .cache/
 /dist/
 _*
+# 例外: Python 包的 __init__.py 必须按字面名入库 —— 否则 app/model 包
+# clone 后缺 __init__.py, `from model import ...` 直接 ImportError。
+# (_* 无斜杠, 会匹配任意层以 _ 开头的文件名, 含 __init__.py。)
+!__init__.py
 *.tar.gz
 *.db
 *.backup
 tmp
+# 第三方源码: 由 third_party/get_softfloat.sh 取回, 不入库
+/third_party/softfloat-3e/

@@ -1,4 +1,4 @@
-# 行尾纪律: 本仓统一 LF(2026-09-10 定案, 见 README.txt 与 _tmp/b1c_syntax.sh)
+# 行尾纪律: 本仓统一 LF(2026-09-10 定案, 见 README.md 与 _tmp/b1c_syntax.sh)
 #
 # 为什么必须留这一份而不是只把文件转一次: 换一台 core.autocrlf=true 的机器
 # checkout, git 会把全仓翻回 CRLF —— 白做一次全仓 diff, 而且 b1c_syntax.sh 的
