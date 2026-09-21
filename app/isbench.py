@@ -633,6 +633,8 @@ def do_openssl(args):
         eprint("openssl 需在 Linux 主机执行")
         sys.exit(2)
     mode = args.mode
+    # --link: static(默认, 原名静态探针) / dynamic(_dy 动态探针, 载 dist/lib 共享 libcrypto)
+    lsfx = "_dy" if getattr(args, "link", "static") == "dynamic" else ""
     reps = args.reps or 1
     tsec = args.time
     timeout = int(os.environ.get("TIMEOUT", "900"))
@@ -645,12 +647,22 @@ def do_openssl(args):
     bsuf = "build/build-openssl11.sh" if lib == "11" else "build/build-openssl.sh"
     abi_list = ["x64", "i386"] if args.abi == "all" else [args.abi]
     is_loong = os.uname().machine == "loongarch64"
+    wcmd = os.environ.get("WINE") or ""
+    if not wcmd:
+        wcmd = _sh("command -v kylin-wine 2>/dev/null") or \
+               _sh("command -v wine 2>/dev/null")
     for a in abi_list:
-        binp = os.path.join(BIN, "%s%s_linux" % (mpre, a))
+        # mode 定 os 形态: wine 跑 _windows[_dy].exe, native/latx 跑 _linux[_dy]
+        if mode == "wine":
+            binp = os.path.join(BIN, "%s%s_windows%s.exe" % (mpre, a, lsfx))
+        else:
+            binp = os.path.join(BIN, "%s%s_linux%s" % (mpre, a, lsfx))
         if not os.path.isfile(binp):
-            eprint("SKIP: %s 缺产物(先跑 %s)" % (binp, bsuf))
+            eprint("SKIP: %s 缺产物(先跑 %s %s)"
+                   % (binp, bsuf, "dynamic" if lsfx else "static"))
             continue
         prefix = []
+        env = None
         if mode == "latx" and not is_loong:
             tr = os.environ.get("LATX64" if a == "x64" else "LATX32")
             if tr:
@@ -665,8 +677,12 @@ def do_openssl(args):
                 eprint("SKIP: native %s 不可执行(rc=%d, 无 ia32?)" % (a, rc))
                 continue
         if mode == "wine":
-            eprint("SKIP: openssl 无 wine 形态产物")
-            continue
+            if not wcmd:
+                eprint("SKIP: wine %s 无 wine/kylin-wine" % a)
+                continue
+            prefix = [wcmd]
+            env = dict(os.environ)
+            env["WINEDEBUG"] = "-all"
         ev, run_m = env_collect(mode)
         ts = datetime.datetime.now()
         # key 不带 abi(openssl 表已有 abi 列); abi 循环内 ts 逐次重取, 天然区分两形态
@@ -679,7 +695,10 @@ def do_openssl(args):
         notes = []
         raw = []
         for _ in range(reps):
-            rc, out, err = probe_exec(binp, prefix, ["--time", str(tsec)], timeout)
+            if mode == "wine":
+                killw()
+            rc, out, err = probe_exec(binp, prefix, ["--time", str(tsec)],
+                                      timeout, env=env)
             if rc != 0:
                 notes.append("EXIT(%d): %s%s"
                              % (rc, os.path.basename(binp),
@@ -705,7 +724,8 @@ def do_openssl(args):
                     hname=run_m["hname"], cpu_model=run_m["cpu_model"],
                     ip=run_m["ip"], done_note="")
         st = ingest(conn, runf, ev, [])
-        row = dict(run_id=key, abi=a, os="linux",
+        row = dict(run_id=key, abi=a,
+                   os="windows" if mode == "wine" else "linux",
                    bits=64 if a == "x64" else 32, tsec=tsec,
                    openssl_ver=ver)
         row.update(agg)
@@ -1147,6 +1167,8 @@ def build_parser():
                         "同表 openssl_ver 列分版本)")
     p.add_argument("--abi", choices=["x64", "i386", "all"], default="all",
                    help="形态(默认 all: x64+i386 各一 run)")
+    p.add_argument("--link", choices=["static", "dynamic"], default="static",
+                   help="链法: static=原名静态探针, dynamic=_dy 动态探针(载 dist/lib 共享库)")
     p.add_argument("--reps", type=int, default=1,
                    help="每 (mode,abi) 执行轮数, 数值列取中位聚合一行")
     p.add_argument("--time", type=int, default=100, dest="time",

@@ -56,6 +56,7 @@ python3 dist/isbench.py ls                 # 列出 runs
 ## 依赖
 
 - 运行：python3 ≥ 3.6（仅标准库）
-- 构建：gcc、gcc-multilib、mingw-w64（x86_64/i686）；loongarch64 交叉工具链与
-  libssl-dev 等为可选，详见 [`docs/指南/安装与部署.md`](docs/指南/安装与部署.md)
+- 构建：gcc、gcc-multilib、mingw-w64（x86_64/i686）；openssl/openssl11 从源码构建
+  需 `perl make` 且源码经 `third_party/get_openssl.sh` 取回；loongarch64 交叉工具链
+  为可选，详见 [`docs/指南/安装与部署.md`](docs/指南/安装与部署.md)
 - 第三方：Berkeley SoftFloat-3e（外部源，见 [`third_party/README.md`](third_party/README.md)）

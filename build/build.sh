@@ -178,15 +178,15 @@ if [ -n "$GRPS_ARG" ]; then
     exit 0
 fi
 
-bash build/build-openssl.sh
+bash build/build-openssl.sh "$MODE_LABEL"
 rm -f dist/SHA256SUMS
 ( cd dist && sha256sum bin/* lib/* isbench.py README.md > SHA256SUMS )
-echo "== openssl 已入 dist/bin =="
+echo "== openssl 已入 dist/bin (模式: $MODE_LABEL) =="
 
-bash build/build-openssl11.sh
+bash build/build-openssl11.sh "$MODE_LABEL"
 rm -f dist/SHA256SUMS
 ( cd dist && sha256sum bin/* lib/* isbench.py README.md > SHA256SUMS )
-echo "== openssl11 已入 dist/bin =="
+echo "== openssl11 已入 dist/bin (模式: $MODE_LABEL) =="
 
 [ "$WITH_TAR" = 1 ] && make -f build/Makefile pack -j4
 rm -f "$VARFILE"
