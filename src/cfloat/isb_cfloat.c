@@ -239,7 +239,7 @@ int main(int argc, char **argv)
     abi = "loongarch64";
 #endif
 #ifdef _WIN32
-    os = "windows";   /* i386_windows 形态: 与 i386_linux 在入库层按 os 区分 */
+    os = "windows";   /* i386_windows/x64_windows 形态: 与同 abi 的 _linux 在入库层按 os 区分 */
 #endif
     {
         static char bb[8];

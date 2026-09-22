@@ -20,6 +20,9 @@
  *   单一口径不漂移。
  *
  * 只测 lat: 无 throughput、无功能测试(不建 verify_cint)、无 8 指令块、无 sem。
+ * 形态: i386/x64 Linux + loongarch64 原生基线 + i386/x64 Windows(.exe, mingw 静态链,
+ *   clock_gettime 由 winpthreads 提供 shim, 故链接需 -lpthread; 本组输出全为整数
+ *   %llu/%d/%s, 无 %L, 不依赖 __USE_MINGW_ANSI_STDIO)。
  * 输出走全仓 data 协议(rec=field/label/data/group), 由 isbench.py 现读现建入库到
  * 同库独立表 bench_cint。
  */
@@ -157,6 +160,11 @@ int main(int argc, char **argv)
     abi = "i386";
 #elif defined(__loongarch64)
     abi = "loongarch64";
+#endif
+#ifdef _WIN32
+    /* mingw 形态(i686/x86_64-w64-mingw32)必须把 os 报成 windows, 与 build.sh 的
+     * *_windows 形态对齐; 否则入库的 os 列会错报 linux, 与真 linux ELF 行混在一起。 */
+    os = "windows";
 #endif
     {
         static char bb[8];

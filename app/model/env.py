@@ -186,7 +186,7 @@ def env_collect(mode):
                     latest).isoformat(timespec="seconds")
         except OSError:
             pass
-    if mode == "wine":
+    if mode in ("wine", "windows"):   # 两者都经 wine 执行, 都要采 wine 指纹
         for v in ("WINE", "WINEPREFIX", "WINEARCH"):
             e["wine_" + v] = os.environ.get(v) or "(unset)"
         w = os.environ.get("WINE") or _sh("command -v kylin-wine 2>/dev/null") \

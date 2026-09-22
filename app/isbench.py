@@ -44,7 +44,7 @@ for _p in (os.path.join(DIR, "app"), DIR):
             sys.path.insert(0, _p)
         break
 
-from model import GROUPS, grp_ident, abi_scope, fnum, eprint          # noqa: E402
+from model import GROUPS, grp_ident, ALL_FORMS, form_abi, form_os, fnum, eprint   # noqa: E402
 from model.db import (                                                # noqa: E402
     connect, ingest, ingest_openssl_metrics, ingest_func, ingest_debug,
     debug_summary, fetch_run, resolve_key, list_runs, schema_guard,
@@ -426,11 +426,11 @@ def consistency_check(conn, runf, benches):
         have = set(table_cols(conn, tn))
         if "latency_status" not in have or "latency_ns" not in have:
             continue
-        # 只查该组在册的 ABI, 且只查本场跑了的 ABI: 拿一个没跑过的 abi 去查 lat
-        # 会命中下面的 `continue` = 静默落空(就是 mov/alu/logic 踩过的那个坑)
-        for abi in [x for x in abi_scope(g)
-                    if runf.get("abi", "all") == "all"
-                    or x == runf.get("abi")]:
+        # 只查本场**实际入库**的 abi(直接问库, 不再查组级白名单): 拿一个没跑过的
+        # abi 去查 lat 会命中下面的 `continue` = 静默落空(就是 mov/alu/logic 踩过的那个坑)。
+        for abi in [r[0] for r in conn.execute(
+                "SELECT DISTINCT abi FROM %s WHERE run_id=?" % tn,
+                (runf["key"],))]:
             def lat_of(run_id):
                 r = conn.execute(
                     "SELECT latency_ns FROM %s WHERE run_id=? AND abi=? AND "
@@ -493,35 +493,38 @@ def do_run(args):
         wcmd = _sh("command -v kylin-wine 2>/dev/null") or \
                _sh("command -v wine 2>/dev/null")
     env0 = dict(os.environ)
-    # loongarch64 只在 abi_scope 含它的组(目前只 cfloat)才会真正进入;
-    # 其余组因 abi_scope 默认 (x64,i386) 在下方被静默跳过。
-    abi_list = (["x64", "i386", "loongarch64"] if abi == "all" else [abi])
+    # 形态 = "<abi>_<os>": mode 定 os 维(只 windows 跑 .exe, 其余跑 _linux ELF),
+    # --abi 定 abi 维。遍历 ALL_FORMS 全集, 不在位者由下方产物判据静默跳过。
+    want_os = "windows" if mode == "windows" else "linux"
+    forms = [f for f in ALL_FORMS if form_os(f) == want_os]
+    if abi != "all":
+        forms = [f for f in forms if form_abi(f) == abi]
     agg_rows, notes, dones = [], [], []
     v_rows, f_rows = [], []   # 详细明细行(dbg) / 功能结果行(func)
     dbg_arg = ["--debug"] if getattr(args, "debug", False) else []
 
     for g in groups:
-        for a in abi_list:
-            if a not in abi_scope(g):
-                # 静默跳过(设计而非缺件): 这组在该 ABI 本来就不在册, 记进 notes
-                # 只会淹掉真告警(与 SKIP: 缺产物 长一个样)。
-                # 也不允许反向"修": 实测拿 x64 编一份 x87 探针它跑得通还全绿
-                # (见 isb_x87.c 取证 6), 所以护栏在源码 #error 与 build.sh 的
-                # GRP_32ONLY, 不在这里。
-                continue
+        # 形态 = 路径组合 + 在位判据: 这组不出某个形态就少跑一个, 不需任何组级
+        # 白名单(给某组加/减形态只改 build.sh 的 GRP_FORMS_<grp>, py 侧零改动)。
+        sfx = ".exe" if want_os == "windows" else ""
+        hits = [f for f in forms
+                if os.path.isfile(os.path.join(BIN, g + "-" + f + sfx))]
+        # 但"整组一个都不在位"必须留痕: 否则 BIN 指错/忘了构建时会静默 0 入库
+        # (旧实现靠 probe_exec 的 缺产物 告警暴露, 不能把它一并丢掉)。
+        if not hits:
+            notes.append("注: %s 无 %s 形态产物(bin=%s), 本场不参与" % (g, want_os, BIN))
+            continue
+        for frm in hits:
+            a = form_abi(frm)
+            # 产物名 = <grp>-<form>(windows 形态带 .exe), 与 build.sh 的命名契约同形。
+            binp = os.path.join(BIN, g + "-" + frm + sfx)
             # loongarch64 原生二进制只能在 loongarch64 机上跑(非 x86 主机直执
             # 行会 Exec format error); 非本机时静默跳过, 不当缺件告警。
             if a == "loongarch64" and not is_loong:
                 continue
-            # WSL i386 已能采集: wine/native/latx 统一跑 _linux ELF(不绕 .exe)
-            if mode in ("native", "latx", "wine"):
-                binp = os.path.join(BIN, "%s-%s_linux" % (g, a))
-                env = None
-            else:  # 保留纯 Windows 侧(.exe) 通道(如真要跑)
-                binp = os.path.join(BIN, "%s-%s_windows.exe" % (g, a))
-                env = env0
+            env = env0 if want_os == "windows" else None
             prefix = []
-            if mode == "wine" and wcmd:
+            if mode in ("wine", "windows") and wcmd:
                 prefix = [wcmd]
                 env = dict(env0)
                 env["WINEDEBUG"] = "-all"
@@ -545,14 +548,14 @@ def do_run(args):
                 notes.append("SKIP: %s-%s native i386 不可执行(无 ia32)"
                              % (g, a))
                 continue
-            if mode == "wine" and not wcmd:
+            if mode in ("wine", "windows") and not wcmd:
                 notes.append("SKIP: %s-%s 无 wine/kylin-wine" % (g, a))
                 continue
             # 多 rep: 每次 exec 单独解析, 同身份列归并聚合(入库一行)
             ident = grp_ident(g)
             raw = {}
             for r in range(1, reps + 1):
-                if mode == "wine":
+                if mode in ("wine", "windows"):
                     killw()
                 rc, out, err = probe_exec(binp, prefix,
                                           ["--time", str(tsec)] + only_arg
@@ -1098,10 +1101,15 @@ def build_parser():
         p.add_argument("--db", default=DEF_DB, help=help)
 
     p = sub.add_parser("run", help="执行一轮测试并入库(宽表: 一指令一行)")
-    p.add_argument("mode", choices=["native", "latx", "wine"])
+    p.add_argument("mode", choices=["native", "latx", "wine", "windows"],
+                   help="native=直跑 _linux ELF; latx=套 LATX 翻译器跑 _linux ELF; "
+                        "wine=经 wine 加载 _linux ELF; windows=经 wine 跑 mingw 的 "
+                        "_windows.exe(Windows 运行时侧对照)")
     p.add_argument("groups", nargs="*",
                    help="组(默认全部: %s)" % " ".join(GROUPS))
-    p.add_argument("--abi", choices=["x64", "i386", "all"], default="all")
+    # --abi 只是形态 abi 维的过滤器; "这组有没有这个形态"由产物在位决定, 不在此登记。
+    p.add_argument("--abi",
+                   choices=["x64", "i386", "loongarch64", "all"], default="all")
     p.add_argument("--reps", type=int, default=1,
                    help="每 (组,abi) 执行轮数, 入库聚合一行(中位)")
     p.add_argument("--time", type=int, default=100, dest="time",

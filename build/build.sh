@@ -71,14 +71,18 @@ ALL_FORMS="x64_linux i386_linux x64_windows i386_windows"
 # 按组专属形态覆盖: 列在 GRP_FORMS 里的组走 GRP_FORMS_<grp>(不并入 ALL_FORMS,
 # 以免 loongarch64 形态被推给只有 x86 源码、无法非 x86 编的其余 18 组)。
 # cfloat = C 数据类型算术延迟, cint = C 整数类型算术延迟; 均为自包含独立探针。
-# cfloat 四形态: i386/x64 Linux(原生 x86 参照) + loongarch64(LoongArch 原生基线)
-#   + i386_windows(.exe, 用于看 mingw/msvcrt 下 long double 的实际精度与 libm 行为)。
-# cint 仍三形态(纯整数, 无 libm/精度诉求, 不需要 windows)。
+# cfloat 五形态: i386/x64 Linux(原生 x86 参照) + loongarch64(LoongArch 原生基线)
+#   + i386_windows/x64_windows(.exe, 用于看 mingw/msvcrt 下 long double 的实际精度与
+#   libm 行为; x64_windows 让 f80 在 Win64 ABI(long double=80 位但 sizeof=16)下也可对拍)。
+# cint 五形态: 在「i386/x64 Linux + loongarch64」三形态之上补 Windows 两形态
+#   i386_windows/x64_windows(mingw 静态链 .exe, 由 `isbench.py run windows` 经 wine 执行):
+#   用途 = 在 Windows 运行时下测同一组整数延迟, 使 i386 vs x64 的差可在两侧对拍。
+#   (纯整数无 libm/精度诉求, 但与 ABI 对比需求一致, 故两 ABI 的 exe 都出。)
 # sfloat = 软浮点(SoftFloat-3e)延迟+正确性: 与 cfloat/cint 同构的自包含独立探针, 三形态
 # i386/x64/loongarch64(loongarch64 为原生基线, x86 为 under-LATX 对照)。
 GRP_FORMS="cfloat cint sfloat"
-GRP_FORMS_cfloat="i386_linux i386_windows x64_linux loongarch64_linux"
-GRP_FORMS_cint="i386_linux x64_linux loongarch64_linux"
+GRP_FORMS_cfloat="i386_linux i386_windows x64_linux x64_windows loongarch64_linux"
+GRP_FORMS_cint="i386_linux x64_linux loongarch64_linux i386_windows x64_windows"
 GRP_FORMS_sfloat="i386_linux x64_linux loongarch64_linux"
 
 forms_of() {
