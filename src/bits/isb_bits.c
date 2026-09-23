@@ -68,9 +68,9 @@
 /* ---------------- 64 位形态(仅 x86_64) ---------------- */
 #ifdef __x86_64__
 /* ---- bt_r_r_q: IB_K_FLG ---- */
-static uint64_t k_bt_r_r_q(unsigned long long it)                                     
+static uint64_t k_bt_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -81,9 +81,9 @@ static uint64_t k_bt_r_r_q(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_bt_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_bt_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -123,9 +123,9 @@ static inline void k_bt_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- btc_r_i_q: IB_K_FLG ---- */
-static uint64_t k_btc_r_i_q(unsigned long long it)                                     
+static uint64_t k_btc_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -136,9 +136,9 @@ static uint64_t k_btc_r_i_q(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_btc_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_btc_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -178,9 +178,9 @@ static inline void k_btc_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- btq_m_i_base_sp: IB_K_FLG8P ---- */
-static uint64_t k_btq_m_i_base_sp(unsigned long long it)                                     
+static uint64_t k_btq_m_i_base_sp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0);                                                        
     __asm__ volatile("mov" "q" " $0x3c," IB_M_SP ::: "memory");                        
     for (i = 0; i < it; i++)                                                      
@@ -189,7 +189,7 @@ static uint64_t k_btq_m_i_base_sp(unsigned long long it)
                 : [a] "+a"(a) : : "cc", "memory");                                
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_btq_m_i_base_sp_tp(unsigned long long it)                                
+static uint64_t k_btq_m_i_base_sp_tp(ib_uw it)                                
 {                                                                                 
     return k_btq_m_i_base_sp(it);                                                            
 }
@@ -210,9 +210,9 @@ static inline void k_btq_m_i_base_sp_kat(int kk, ib_kv *g)
 }
 
 /* ---- bsr_r_r_q: IB_K_BIT ---- */
-static uint64_t k_bsr_r_r_q(unsigned long long it)                                     
+static uint64_t k_bsr_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 0x20), s = (IB_UQ)0;                                    
     IB_UQ b = (IB_UQ)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UQ c = (IB_UQ)0x0807, t = (IB_UQ)0x20;                                              
@@ -223,9 +223,9 @@ static uint64_t k_bsr_r_r_q(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_bsr_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_bsr_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 0x20), e = (IB_UQ)(IB_SEED(2) | 0x20);                  
     IB_UQ s = (IB_UQ)0, f = (IB_UQ)0;                                                      
     IB_UQ b = (IB_UQ)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -263,9 +263,9 @@ static inline void k_bsr_r_r_q_kat(int kk, ib_kv *g)
 
 /* ---------------- 两 ABI 共有形态 ---------------- */
 /* ---- bt_r_r_l: IB_K_FLG ---- */
-static uint64_t k_bt_r_r_l(unsigned long long it)                                     
+static uint64_t k_bt_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -276,9 +276,9 @@ static uint64_t k_bt_r_r_l(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_bt_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_bt_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -318,9 +318,9 @@ static inline void k_bt_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- bt_r_i_l: IB_K_FLG ---- */
-static uint64_t k_bt_r_i_l(unsigned long long it)                                     
+static uint64_t k_bt_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -331,9 +331,9 @@ static uint64_t k_bt_r_i_l(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_bt_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_bt_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -373,9 +373,9 @@ static inline void k_bt_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- bts_r_r_l: IB_K_FLG ---- */
-static uint64_t k_bts_r_r_l(unsigned long long it)                                     
+static uint64_t k_bts_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -386,9 +386,9 @@ static uint64_t k_bts_r_r_l(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_bts_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_bts_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -428,9 +428,9 @@ static inline void k_bts_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- bsf_r_r_l: IB_K_BIT ---- */
-static uint64_t k_bsf_r_r_l(unsigned long long it)                                     
+static uint64_t k_bsf_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -441,9 +441,9 @@ static uint64_t k_bsf_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_bsf_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_bsf_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -478,9 +478,9 @@ static inline void k_bsf_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- popcnt_r_r_l: IB_K_BIT ---- */
-static uint64_t k_popcnt_r_r_l(unsigned long long it)                                     
+static uint64_t k_popcnt_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -491,9 +491,9 @@ static uint64_t k_popcnt_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_popcnt_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_popcnt_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -528,9 +528,9 @@ static inline void k_popcnt_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- lzcnt_r_r_l: IB_K_BIT ---- */
-static uint64_t k_lzcnt_r_r_l(unsigned long long it)                                     
+static uint64_t k_lzcnt_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -541,9 +541,9 @@ static uint64_t k_lzcnt_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_lzcnt_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_lzcnt_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -578,9 +578,9 @@ static inline void k_lzcnt_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- tzcnt_r_r_l: IB_K_BIT ---- */
-static uint64_t k_tzcnt_r_r_l(unsigned long long it)                                     
+static uint64_t k_tzcnt_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -591,9 +591,9 @@ static uint64_t k_tzcnt_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_tzcnt_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_tzcnt_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -628,9 +628,9 @@ static inline void k_tzcnt_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- andn_r_r_l: IB_K_BIT ---- */
-static uint64_t k_andn_r_r_l(unsigned long long it)                                     
+static uint64_t k_andn_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -641,9 +641,9 @@ static uint64_t k_andn_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_andn_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_andn_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -679,9 +679,9 @@ static inline void k_andn_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- bzhi_r_r_l: IB_K_BIT ---- */
-static uint64_t k_bzhi_r_r_l(unsigned long long it)                                     
+static uint64_t k_bzhi_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -692,9 +692,9 @@ static uint64_t k_bzhi_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_bzhi_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_bzhi_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -728,9 +728,9 @@ static inline void k_bzhi_r_r_l_kat(int kk, ib_kv *g)
     g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b; g->inf = 0;
     g->o0 = (uint64_t)a; g->o1 = (uint64_t)s; g->outf = (uint64_t)0 & (0);
 }/* ---- blsr_r_r_l: IB_K_BIT ---- */
-static uint64_t k_blsr_r_r_l(unsigned long long it)                                     
+static uint64_t k_blsr_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -741,9 +741,9 @@ static uint64_t k_blsr_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_blsr_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_blsr_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -778,9 +778,9 @@ static inline void k_blsr_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- bextr_r_r_l: IB_K_BIT ---- */
-static uint64_t k_bextr_r_r_l(unsigned long long it)                                     
+static uint64_t k_bextr_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -791,9 +791,9 @@ static uint64_t k_bextr_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_bextr_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_bextr_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -827,9 +827,9 @@ static inline void k_bextr_r_r_l_kat(int kk, ib_kv *g)
     g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b; g->inf = 0;
     g->o0 = (uint64_t)a; g->o1 = (uint64_t)s; g->outf = (uint64_t)0 & (0);
 }/* ---- pdep_r_r_l: IB_K_BIT ---- */
-static uint64_t k_pdep_r_r_l(unsigned long long it)                                     
+static uint64_t k_pdep_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -840,9 +840,9 @@ static uint64_t k_pdep_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_pdep_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_pdep_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
@@ -878,9 +878,9 @@ static inline void k_pdep_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- pext_r_r_l: IB_K_BIT ---- */
-static uint64_t k_pext_r_r_l(unsigned long long it)                                     
+static uint64_t k_pext_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), s = (IB_UL)0;                                    
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          
     IB_UL c = (IB_UL)0x0807, t = (IB_UL)0x20;                                              
@@ -891,9 +891,9 @@ static uint64_t k_pext_r_r_l(unsigned long long it)
                 : [b] "r"(b), [c] "r"(c), [t] "r"(t) : "cc");                     
     return IB_S2((uint64_t)a, (uint64_t)s);                                       
 }                                                                                 
-static uint64_t k_pext_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_pext_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 0x20), e = (IB_UL)(IB_SEED(2) | 0x20);                  
     IB_UL s = (IB_UL)0, f = (IB_UL)0;                                                      
     IB_UL b = (IB_UL)((IB_SEED(1) & 0x0f0f0f0f) | 0x01010101);                          

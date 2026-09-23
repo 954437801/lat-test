@@ -301,7 +301,9 @@ static void pmul_build_tables(void)
 #define PMUL_TMS_DEF    50
 #define PMUL_LAT_WARM   1000ULL     /* 第一轮只预热, 不出数 */
 #define PMUL_LAT_ROUNDS 6           /* 预热 + 最多 5 轮放大 */
-#define PMUL_IT_CAP     (1ULL << 34)
+/* 迭代上限: 自适应放大最多到此。再受本机字长约束 —— 计时内核形参已是 ib_uw(i386=32 位),
+ * 若 it 超过 2^32-1 会被静默截断, 故在 i386 上把上限压回 IB_UW_MAX(x64 仍为 2^34)。 */
+#define PMUL_IT_CAP     ((1ULL << 34) < IB_UW_MAX ? (1ULL << 34) : IB_UW_MAX)
 #define PMUL_NCHAIN     8           /* tput 独立累加链数 */
 #define PMUL_TPUT_BLK   1024        /* tput 每查一次钟的每链操作数 */
 #define PMUL_KAT_N      320         /* kat 串上限: 6 段 16 位定宽 16 进制串 + 标签, 实测 ~160 */
@@ -414,10 +416,10 @@ static void pmul_kat_str(char *dst, size_t n, const struct pmul_tier *t,
  * 把载入提到循环外, 编译器就有了把整个乘法常数折叠掉的空间, 测出来的就不再是
  * "两侧都是变量"的成本(那是本组成立的前提)。 */
 static uint64_t pmul_lat(pmul_mul_fn fn, uint64_t a, uint64_t b,
-                         unsigned long long iters)
+                         ib_uw iters)
 {
     uint64_t acc[3] = { 0, 0, 0 };
-    unsigned long long i;
+    ib_uw i;
     uint64_t t0, t1;        /* 整数纳秒: 不用 double 往返 */
 
     g_a = a;

@@ -33,6 +33,11 @@
 #include "isb_sfloat_kat.h"     /* 8 槽真值表(生成物, 请勿手改) */
 
 /* 空 asm 内存屏障(编译器可移植): 阻断把计时循环并进前后。 */
+/* 本机字长整型: i386=32、x64/loongarch64=64。内核迭代数与循环计数器取本机字长 ——
+ * 若取 64 位, i386 上每轮多一条 `add $1,%eax; adc $0,%edx`(进位对), 在旗标写昂贵的
+ * i386 路径上把整轮延迟钉在脚手架地板, 淹没被测软浮点运算的真实延迟(与 src/cint 同源)。 */
+typedef uintptr_t sf_uw;
+
 #define SF_BARRIER() __asm__ __volatile__("" ::: "memory")
 
 /* 单调时钟整数纳秒(与全仓 ib_now 同口径: 全整数, 不引浮点入计时路径)。 */
@@ -71,36 +76,36 @@ static float128_t   sf_q128(double d) { return f64_to_f128(sf_d64(d)); }
  * b 由 volatile 播种 1.0 读入局部: 值编译期不可见 -> 防常量折叠/循环消除; 取 1.0 使
  * mul/div 链恒等、add/sub 链只在 ±iters 整数域漂移 -> 全程规格化数, 不落 denormal/inf。 */
 #define SF_LAT_f64(tag, op, FN)                                             \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     volatile double vseed = 1.0;                                            \
     double d = vseed;                                                       \
     float64_t acc = sf_d64(d), b = sf_d64(d);                               \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = FN(acc, b);                                                   \
     SF_BARRIER();                                                           \
     return sf_fold(&acc, (int)sizeof acc);                                  \
 }
 #define SF_LAT_f80(tag, op, FN)                                             \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     volatile double vseed = 1.0;                                            \
     double d = vseed;                                                       \
     extFloat80_t acc = sf_e80(d), b = sf_e80(d);                            \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = FN(acc, b);                                                   \
     SF_BARRIER();                                                           \
     return sf_fold(&acc, (int)sizeof acc);                                  \
 }
 #define SF_LAT_f128(tag, op, FN)                                            \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     volatile double vseed = 1.0;                                            \
     double d = vseed;                                                       \
     float128_t acc = sf_q128(d), b = sf_q128(d);                            \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = FN(acc, b);                                                   \
     SF_BARRIER();                                                           \
@@ -108,33 +113,33 @@ static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
 }
 /* ---- 测速: 一元原语(sqrt), 串行依赖链 acc = FN(acc); 种子 1.0 -> sqrt(1)=1 恒稳 ---- */
 #define SF_LAT1_f64(tag, op, FN)                                            \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     volatile double vseed = 1.0;                                            \
     float64_t acc = sf_d64(vseed);                                          \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = FN(acc);                                                      \
     SF_BARRIER();                                                           \
     return sf_fold(&acc, (int)sizeof acc);                                  \
 }
 #define SF_LAT1_f80(tag, op, FN)                                            \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     volatile double vseed = 1.0;                                            \
     extFloat80_t acc = sf_e80(vseed);                                       \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = FN(acc);                                                      \
     SF_BARRIER();                                                           \
     return sf_fold(&acc, (int)sizeof acc);                                  \
 }
 #define SF_LAT1_f128(tag, op, FN)                                           \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     volatile double vseed = 1.0;                                            \
     float128_t acc = sf_q128(vseed);                                        \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = FN(acc);                                                      \
     SF_BARRIER();                                                           \
@@ -153,12 +158,12 @@ static const double sf_sin_c5 = -1.0 / 39916800.0;
  * 迭代映射 acc <- 2*P(acc) 在 x≈1.895 有稳定不动点(2 sin 的不动点, 导数≈-0.65):
  * acc 全程停在 ~1.89~1.90, 规格化、非零、非退化, 测到的就是"一条软浮点 sin 链"的延迟。 */
 #define SF_LAT_SIN_f80(tag, op)                                             \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     extFloat80_t c0 = sf_e80(1.0),  c1 = sf_e80(sf_sin_c1), c2 = sf_e80(sf_sin_c2); \
     extFloat80_t c3 = sf_e80(sf_sin_c3), c4 = sf_e80(sf_sin_c4), c5 = sf_e80(sf_sin_c5); \
     extFloat80_t two = sf_e80(2.0), acc = sf_e80(1.9);                      \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++) {                                          \
         extFloat80_t x = acc, x2 = extF80_mul(x, x), p;                     \
         p = c5;                                                             \
@@ -173,12 +178,12 @@ static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
     return sf_fold(&acc, (int)sizeof acc);                                  \
 }
 #define SF_LAT_SIN_f128(tag, op)                                            \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(sf_uw iters)                  \
 {                                                                           \
     float128_t c0 = sf_q128(1.0), c1 = sf_q128(sf_sin_c1), c2 = sf_q128(sf_sin_c2); \
     float128_t c3 = sf_q128(sf_sin_c3), c4 = sf_q128(sf_sin_c4), c5 = sf_q128(sf_sin_c5); \
     float128_t two = sf_q128(2.0), acc = sf_q128(1.9);                      \
-    unsigned long long i;                                                   \
+    sf_uw i;                                                   \
     for (i = 0; i < iters; i++) {                                          \
         float128_t x = acc, x2 = f128_mul(x, x), p;                         \
         p = c5;                                                             \
@@ -276,7 +281,7 @@ SF_LAT_SIN_f128(sf_f128, sin)
 
 struct sf_case {
     const char *name;
-    uint64_t (*lat)(unsigned long long iters);
+    uint64_t (*lat)(sf_uw iters);
     const char *const *gold;                 /* NULL = 仅测速(无真值) */
     void (*got)(int k, char *o, size_t n);
 };
@@ -340,7 +345,7 @@ static const char *sf_kat(const struct sf_case *c)
 int main(int argc, char **argv)
 {
     const char *abi = "x86_64", *os = "linux", *only = NULL;
-    unsigned long long iters = 200000;   /* 软浮点默认可小些(f128 慢) */
+    sf_uw iters = 200000;   /* 软浮点默认可小些(f128 慢) */
     int i, ok = 0, tot = 0, do_debug = 0;
     char bitsbuf[8];
     const char *bits;
@@ -360,7 +365,7 @@ int main(int argc, char **argv)
 
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--iters") && i + 1 < argc) {
-            iters = strtoull(argv[++i], NULL, 0);
+            iters = (sf_uw)strtoull(argv[++i], NULL, 0);
             if (!iters)
                 iters = 200000;
         } else if (!strncmp(argv[i], "--only=", 7)) {

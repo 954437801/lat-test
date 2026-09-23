@@ -71,163 +71,163 @@ __attribute__((target("avx"))) static inline __m256i wrot256(int *k)
  * 计数走寄存器形(xmm, xmm)而不是立即数形: 前者才是真实 x86 应用里的常见形制。每条的
  * 计数是各自写死的常数(3/5/7/11/3), 审计端按同一常数复算; 全部落在
  * 1 <= 计数 < lane 宽度 区间内(计数 >= 宽度时 CF 机型相关, 不上表)。 */
-static uint64_t k_psrlw(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0xf0f0),n=_mm_set_epi64x(0,3); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi16(a,n),w); }
+static uint64_t k_psrlw(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0xf0f0),n=_mm_set_epi64x(0,3); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi16(a,n),w); }
     return ib_sig128(a); }
-static uint64_t k_psrlw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0xf0f0),b=_mm_set1_epi16((short)0x0f0f),
-    c=_mm_set1_epi16((short)0x3333),d=_mm_set1_epi16((short)0x7777),n=_mm_set_epi64x(0,3); int k=0; unsigned long long i;
+static uint64_t k_psrlw_tp(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0xf0f0),b=_mm_set1_epi16((short)0x0f0f),
+    c=_mm_set1_epi16((short)0x3333),d=_mm_set1_epi16((short)0x7777),n=_mm_set_epi64x(0,3); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi16(a,n),w); b=V128(_mm_srl_epi16(b,n),w);
         c=V128(_mm_srl_epi16(c,n),w); d=V128(_mm_srl_epi16(d,n),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_psrld(unsigned long long iters){ __m128i a=_mm_set1_epi32(0x5a5a5a5a),n=_mm_set_epi64x(0,5); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi32(a,n),w); }
+static uint64_t k_psrld(ib_uw iters){ __m128i a=_mm_set1_epi32(0x5a5a5a5a),n=_mm_set_epi64x(0,5); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi32(a,n),w); }
     return ib_sig128(a); }
-static uint64_t k_psrld_tp(unsigned long long iters){ __m128i a=_mm_set1_epi32(0x5a5a5a5a),b=_mm_set1_epi32(0x3c3c3c3c),
-    c=_mm_set1_epi32(0x0f0f0f0f),d=_mm_set1_epi32(0x77777777),n=_mm_set_epi64x(0,5); int k=0; unsigned long long i;
+static uint64_t k_psrld_tp(ib_uw iters){ __m128i a=_mm_set1_epi32(0x5a5a5a5a),b=_mm_set1_epi32(0x3c3c3c3c),
+    c=_mm_set1_epi32(0x0f0f0f0f),d=_mm_set1_epi32(0x77777777),n=_mm_set_epi64x(0,5); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi32(a,n),w); b=V128(_mm_srl_epi32(b,n),w);
         c=V128(_mm_srl_epi32(c,n),w); d=V128(_mm_srl_epi32(d,n),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_psrlq(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x0123456789abcdefULL),n=_mm_set_epi64x(0,7); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi64(a,n),w); }
+static uint64_t k_psrlq(ib_uw iters){ __m128i a=_mm_set1_epi64x(0x0123456789abcdefULL),n=_mm_set_epi64x(0,7); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi64(a,n),w); }
     return ib_sig128(a); }
-static uint64_t k_psrlq_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x0123456789abcdefULL),
+static uint64_t k_psrlq_tp(ib_uw iters){ __m128i a=_mm_set1_epi64x(0x0123456789abcdefULL),
     b=_mm_set1_epi64x(0xfedcba9876543210ULL),c=_mm_set1_epi64x(0x1122334455667788ULL),
-    d=_mm_set1_epi64x(0x99aabbccddeeff00ULL),n=_mm_set_epi64x(0,7); int k=0; unsigned long long i;
+    d=_mm_set1_epi64x(0x99aabbccddeeff00ULL),n=_mm_set_epi64x(0,7); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_srl_epi64(a,n),w); b=V128(_mm_srl_epi64(b,n),w);
         c=V128(_mm_srl_epi64(c,n),w); d=V128(_mm_srl_epi64(d,n),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_psllq(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0xdeadbeefcafebabeULL),n=_mm_set_epi64x(0,11); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_sll_epi64(a,n),w); }
+static uint64_t k_psllq(ib_uw iters){ __m128i a=_mm_set1_epi64x(0xdeadbeefcafebabeULL),n=_mm_set_epi64x(0,11); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_sll_epi64(a,n),w); }
     return ib_sig128(a); }
-static uint64_t k_psllq_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0xdeadbeefcafebabeULL),
+static uint64_t k_psllq_tp(ib_uw iters){ __m128i a=_mm_set1_epi64x(0xdeadbeefcafebabeULL),
     b=_mm_set1_epi64x(0x0f1e2d3c4b5a6978ULL),c=_mm_set1_epi64x(0x8978675645342312ULL),
-    d=_mm_set1_epi64x(0xf0f0f0f00f0f0f0fULL),n=_mm_set_epi64x(0,11); int k=0; unsigned long long i;
+    d=_mm_set1_epi64x(0xf0f0f0f00f0f0f0fULL),n=_mm_set_epi64x(0,11); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_sll_epi64(a,n),w); b=V128(_mm_sll_epi64(b,n),w);
         c=V128(_mm_sll_epi64(c,n),w); d=V128(_mm_sll_epi64(d,n),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 /* 算术右移: 种子取负数(最高位置 1) —— 种子恒正时符号扩展分支从头到尾不走, 实测
  * 与逻辑右移逐位相同(同 isb_shift.c 那句 IB_TOPBIT 的教训) */
-static uint64_t k_psraw(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x8000),n=_mm_set_epi64x(0,3); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_sra_epi16(a,n),w); }
+static uint64_t k_psraw(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x8000),n=_mm_set_epi64x(0,3); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_sra_epi16(a,n),w); }
     return ib_sig128(a); }
-static uint64_t k_psraw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x8000),b=_mm_set1_epi16((short)0xc000),
-    c=_mm_set1_epi16((short)0xffff),d=_mm_set1_epi16((short)0xaaaa),n=_mm_set_epi64x(0,3); int k=0; unsigned long long i;
+static uint64_t k_psraw_tp(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x8000),b=_mm_set1_epi16((short)0xc000),
+    c=_mm_set1_epi16((short)0xffff),d=_mm_set1_epi16((short)0xaaaa),n=_mm_set_epi64x(0,3); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_sra_epi16(a,n),w); b=V128(_mm_sra_epi16(b,n),w);
         c=V128(_mm_sra_epi16(c,n),w); d=V128(_mm_sra_epi16(d,n),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 
 /* ==================== 2. SSE2 洗牌/拼包族 ==================== */
-static uint64_t k_punpcklwd(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x1111); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi16(a,w),w); }
+static uint64_t k_punpcklwd(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x1111); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi16(a,w),w); }
     return ib_sig128(a); }
-static uint64_t k_punpcklwd_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x1111),b=_mm_set1_epi16((short)0x2222),
-    c=_mm_set1_epi16((short)0x3333),d=_mm_set1_epi16((short)0x4444); int k=0; unsigned long long i;
+static uint64_t k_punpcklwd_tp(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x1111),b=_mm_set1_epi16((short)0x2222),
+    c=_mm_set1_epi16((short)0x3333),d=_mm_set1_epi16((short)0x4444); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi16(a,w),w); b=V128(_mm_unpacklo_epi16(b,w),w);
         c=V128(_mm_unpacklo_epi16(c,w),w); d=V128(_mm_unpacklo_epi16(d,w),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_punpcklbw(unsigned long long iters){ __m128i a=_mm_set1_epi8(0x5a); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi8(a,w),w); }
+static uint64_t k_punpcklbw(ib_uw iters){ __m128i a=_mm_set1_epi8(0x5a); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi8(a,w),w); }
     return ib_sig128(a); }
-static uint64_t k_punpcklbw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi8(0x5a),b=_mm_set1_epi8(0xa5),
-    c=_mm_set1_epi8(0x3c),d=_mm_set1_epi8(0xc3); int k=0; unsigned long long i;
+static uint64_t k_punpcklbw_tp(ib_uw iters){ __m128i a=_mm_set1_epi8(0x5a),b=_mm_set1_epi8(0xa5),
+    c=_mm_set1_epi8(0x3c),d=_mm_set1_epi8(0xc3); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi8(a,w),w); b=V128(_mm_unpacklo_epi8(b,w),w);
         c=V128(_mm_unpacklo_epi8(c,w),w); d=V128(_mm_unpacklo_epi8(d,w),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_punpcklqdq(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x0102030405060708ULL); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi64(a,w),w); }
+static uint64_t k_punpcklqdq(ib_uw iters){ __m128i a=_mm_set1_epi64x(0x0102030405060708ULL); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi64(a,w),w); }
     return ib_sig128(a); }
-static uint64_t k_punpcklqdq_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x0102030405060708ULL),
+static uint64_t k_punpcklqdq_tp(ib_uw iters){ __m128i a=_mm_set1_epi64x(0x0102030405060708ULL),
     b=_mm_set1_epi64x(0x1112131415161718ULL),c=_mm_set1_epi64x(0x2122232425262728ULL),
-    d=_mm_set1_epi64x(0x3132333435363738ULL); int k=0; unsigned long long i;
+    d=_mm_set1_epi64x(0x3132333435363738ULL); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_unpacklo_epi64(a,w),w); b=V128(_mm_unpacklo_epi64(b,w),w);
         c=V128(_mm_unpacklo_epi64(c,w),w); d=V128(_mm_unpacklo_epi64(d,w),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 /* 两条 shuffle 的 imm 都取 0x4E(字/双字选序 2,3,0,1): 是置换而不是复制。
  * pshuflw 的高 4 字来自 dst(即 a 自身) -> 顺带盯「merge 不许动另一半」这条语义 */
-static uint64_t k_pshuflw(unsigned long long iters){ __m128i a=_mm_set1_epi32(1); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_shufflelo_epi16(a,0x4E),w); }
+static uint64_t k_pshuflw(ib_uw iters){ __m128i a=_mm_set1_epi32(1); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_shufflelo_epi16(a,0x4E),w); }
     return ib_sig128(a); }
-static uint64_t k_pshuflw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi32(1),b=_mm_set1_epi32(2),
-    c=_mm_set1_epi32(3),d=_mm_set1_epi32(4); int k=0; unsigned long long i;
+static uint64_t k_pshuflw_tp(ib_uw iters){ __m128i a=_mm_set1_epi32(1),b=_mm_set1_epi32(2),
+    c=_mm_set1_epi32(3),d=_mm_set1_epi32(4); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_shufflelo_epi16(a,0x4E),w); b=V128(_mm_shufflelo_epi16(b,0x4E),w);
         c=V128(_mm_shufflelo_epi16(c,0x4E),w); d=V128(_mm_shufflelo_epi16(d,0x4E),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_pshufd(unsigned long long iters){ __m128i a=_mm_set1_epi32(0x0f0f0f0f); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_shuffle_epi32(a,0x4E),w); }
+static uint64_t k_pshufd(ib_uw iters){ __m128i a=_mm_set1_epi32(0x0f0f0f0f); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_shuffle_epi32(a,0x4E),w); }
     return ib_sig128(a); }
-static uint64_t k_pshufd_tp(unsigned long long iters){ __m128i a=_mm_set1_epi32(0x0f0f0f0f),b=_mm_set1_epi32(0xf0f0f0f0),
-    c=_mm_set1_epi32(0x12345678),d=_mm_set1_epi32((int)0x9abcdef0u); int k=0; unsigned long long i;
+static uint64_t k_pshufd_tp(ib_uw iters){ __m128i a=_mm_set1_epi32(0x0f0f0f0f),b=_mm_set1_epi32(0xf0f0f0f0),
+    c=_mm_set1_epi32(0x12345678),d=_mm_set1_epi32((int)0x9abcdef0u); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_shuffle_epi32(a,0x4E),w); b=V128(_mm_shuffle_epi32(b,0x4E),w);
         c=V128(_mm_shuffle_epi32(c,0x4E),w); d=V128(_mm_shuffle_epi32(d,0x4E),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_packuswb(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)-2); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_packus_epi16(a,w),w); }
+static uint64_t k_packuswb(ib_uw iters){ __m128i a=_mm_set1_epi16((short)-2); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_packus_epi16(a,w),w); }
     return ib_sig128(a); }
-static uint64_t k_packuswb_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)-2),b=_mm_set1_epi16((short)300),
-    c=_mm_set1_epi16((short)-300),d=_mm_set1_epi16((short)2); int k=0; unsigned long long i;
+static uint64_t k_packuswb_tp(ib_uw iters){ __m128i a=_mm_set1_epi16((short)-2),b=_mm_set1_epi16((short)300),
+    c=_mm_set1_epi16((short)-300),d=_mm_set1_epi16((short)2); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=V128(_mm_packus_epi16(a,w),w); b=V128(_mm_packus_epi16(b,w),w);
         c=V128(_mm_packus_epi16(c,w),w); d=V128(_mm_packus_epi16(d,w),w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 
 /* ==================== 3. SSE2 算术/逻辑族 ==================== */
-static uint64_t k_paddq(unsigned long long iters){ __m128i a=_mm_set1_epi64x(1); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++) a=_mm_add_epi64(a,wrot(&k)); return ib_sig128(a); }
-static uint64_t k_paddq_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64x(1),b=_mm_set1_epi64x(2),
-    c=_mm_set1_epi64x(3),d=_mm_set1_epi64x(4); int k=0; unsigned long long i;
+static uint64_t k_paddq(ib_uw iters){ __m128i a=_mm_set1_epi64x(1); int k=0;
+    ib_uw i; for(i=0;i<iters;i++) a=_mm_add_epi64(a,wrot(&k)); return ib_sig128(a); }
+static uint64_t k_paddq_tp(ib_uw iters){ __m128i a=_mm_set1_epi64x(1),b=_mm_set1_epi64x(2),
+    c=_mm_set1_epi64x(3),d=_mm_set1_epi64x(4); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=_mm_add_epi64(a,w); b=_mm_add_epi64(b,w);
         c=_mm_add_epi64(c,w); d=_mm_add_epi64(d,w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_psubd(unsigned long long iters){ __m128i a=_mm_set1_epi32(0x77777777); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++) a=_mm_sub_epi32(a,wrot(&k)); return ib_sig128(a); }
-static uint64_t k_psubd_tp(unsigned long long iters){ __m128i a=_mm_set1_epi32(0x77777777),b=_mm_set1_epi32(0x12345678),
-    c=_mm_set1_epi32((int)0x80000000u),d=_mm_setzero_si128(); int k=0; unsigned long long i;
+static uint64_t k_psubd(ib_uw iters){ __m128i a=_mm_set1_epi32(0x77777777); int k=0;
+    ib_uw i; for(i=0;i<iters;i++) a=_mm_sub_epi32(a,wrot(&k)); return ib_sig128(a); }
+static uint64_t k_psubd_tp(ib_uw iters){ __m128i a=_mm_set1_epi32(0x77777777),b=_mm_set1_epi32(0x12345678),
+    c=_mm_set1_epi32((int)0x80000000u),d=_mm_setzero_si128(); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); a=_mm_sub_epi32(a,w); b=_mm_sub_epi32(b,w);
         c=_mm_sub_epi32(c,w); d=_mm_sub_epi32(d,w); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_pand(unsigned long long iters){ __m128i a=_mm_set1_epi32((int)0xffff0000u); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_and_si128(a,w),v); }
+static uint64_t k_pand(ib_uw iters){ __m128i a=_mm_set1_epi32((int)0xffff0000u); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_and_si128(a,w),v); }
     return ib_sig128(a); }
-static uint64_t k_pand_tp(unsigned long long iters){ __m128i a=_mm_set1_epi32((int)0xffff0000u),b=_mm_set1_epi32(0x00ff00ff),
-    c=_mm_set1_epi32(0x0f0f0f0f),d=_mm_set1_epi32((int)0xf0f0f0f0); int k=0; unsigned long long i;
+static uint64_t k_pand_tp(ib_uw iters){ __m128i a=_mm_set1_epi32((int)0xffff0000u),b=_mm_set1_epi32(0x00ff00ff),
+    c=_mm_set1_epi32(0x0f0f0f0f),d=_mm_set1_epi32((int)0xf0f0f0f0); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k);
         a=_mm_xor_si128(_mm_and_si128(a,w),v); b=_mm_xor_si128(_mm_and_si128(b,w),v);
         c=_mm_xor_si128(_mm_and_si128(c,w),v); d=_mm_xor_si128(_mm_and_si128(d,w),v); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_por(unsigned long long iters){ __m128i a=_mm_setzero_si128(); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_or_si128(a,w),v); }
+static uint64_t k_por(ib_uw iters){ __m128i a=_mm_setzero_si128(); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_or_si128(a,w),v); }
     return ib_sig128(a); }
-static uint64_t k_por_tp(unsigned long long iters){ __m128i a=_mm_setzero_si128(),b=_mm_set1_epi32(0x0000ff00),
-    c=_mm_set1_epi32(0xff00ff00),d=_mm_set1_epi32(0x00ff0000); int k=0; unsigned long long i;
+static uint64_t k_por_tp(ib_uw iters){ __m128i a=_mm_setzero_si128(),b=_mm_set1_epi32(0x0000ff00),
+    c=_mm_set1_epi32(0xff00ff00),d=_mm_set1_epi32(0x00ff0000); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k);
         a=_mm_xor_si128(_mm_or_si128(a,w),v); b=_mm_xor_si128(_mm_or_si128(b,w),v);
         c=_mm_xor_si128(_mm_or_si128(c,w),v); d=_mm_xor_si128(_mm_or_si128(d,w),v); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_pmulhuw(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x3fff); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_mulhi_epu16(a,w),v); }
+static uint64_t k_pmulhuw(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x3fff); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_mulhi_epu16(a,w),v); }
     return ib_sig128(a); }
-static uint64_t k_pmulhuw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x3fff),b=_mm_set1_epi16((short)0x0f0f),
-    c=_mm_set1_epi16((short)12345),d=_mm_set1_epi16((short)-32768); int k=0; unsigned long long i;
+static uint64_t k_pmulhuw_tp(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x3fff),b=_mm_set1_epi16((short)0x0f0f),
+    c=_mm_set1_epi16((short)12345),d=_mm_set1_epi16((short)-32768); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k);
         a=_mm_xor_si128(_mm_mulhi_epu16(a,w),v); b=_mm_xor_si128(_mm_mulhi_epu16(b,w),v);
         c=_mm_xor_si128(_mm_mulhi_epu16(c,w),v); d=_mm_xor_si128(_mm_mulhi_epu16(d,w),v); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_pmullw(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x0101); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_mullo_epi16(a,w),v); }
+static uint64_t k_pmullw(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x0101); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_mullo_epi16(a,w),v); }
     return ib_sig128(a); }
-static uint64_t k_pmullw_tp(unsigned long long iters){ __m128i a=_mm_set1_epi16((short)0x0101),b=_mm_set1_epi16((short)0x0202),
-    c=_mm_set1_epi16((short)-1),d=_mm_set1_epi16((short)7); int k=0; unsigned long long i;
+static uint64_t k_pmullw_tp(ib_uw iters){ __m128i a=_mm_set1_epi16((short)0x0101),b=_mm_set1_epi16((short)0x0202),
+    c=_mm_set1_epi16((short)-1),d=_mm_set1_epi16((short)7); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k);
         a=_mm_xor_si128(_mm_mullo_epi16(a,w),v); b=_mm_xor_si128(_mm_mullo_epi16(b,w),v);
         c=_mm_xor_si128(_mm_mullo_epi16(c,w),v); d=_mm_xor_si128(_mm_mullo_epi16(d,w),v); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
 /* pmuludq 只取每个 qword 的低 32 位相乘 -> 「高 32 位必须被忽略」本身就是被测语义
  * (译成整 64 位乘在这里现形) */
-static uint64_t k_pmuludq(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x00000001ffffffffULL); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_mul_epu32(a,w),v); }
+static uint64_t k_pmuludq(ib_uw iters){ __m128i a=_mm_set1_epi64x(0x00000001ffffffffULL); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k); a=_mm_xor_si128(_mm_mul_epu32(a,w),v); }
     return ib_sig128(a); }
-static uint64_t k_pmuludq_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64x(0x00000001ffffffffULL),
+static uint64_t k_pmuludq_tp(ib_uw iters){ __m128i a=_mm_set1_epi64x(0x00000001ffffffffULL),
     b=_mm_set1_epi64x(0x0000000212345678ULL),c=_mm_set1_epi64x(0x00000003ffffffffULL),
-    d=_mm_set1_epi64x(0x000000040f0f0f0fULL); int k=0; unsigned long long i;
+    d=_mm_set1_epi64x(0x000000040f0f0f0fULL); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k),v=wrot(&k);
         a=_mm_xor_si128(_mm_mul_epu32(a,w),v); b=_mm_xor_si128(_mm_mul_epu32(b,w),v);
         c=_mm_xor_si128(_mm_mul_epu32(c,w),v); d=_mm_xor_si128(_mm_mul_epu32(d,w),v); }
@@ -237,29 +237,29 @@ static uint64_t k_pmuludq_tp(unsigned long long iters){ __m128i a=_mm_set1_epi64
 /* NEXTK 的 n 必须是 2 的幂(宏内部是 & (n-1)): 这里写 63 会得到 mask 62 ->
  * k 永停 0 -> 四条累加器拿到同一个值 -> GCC 的 xor 对消直接把 _tp 体清空
  * (现象: tput_ops 冲到 1e12 量级)。轮转窗口统一用 16。 */
-static uint64_t k_movd_in(unsigned long long iters){ __m128i a=_mm_setzero_si128(); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++) a=_mm_xor_si128(a,_mm_cvtsi32_si128(g_ibuf[NEXTK(k,16)]));
+static uint64_t k_movd_in(ib_uw iters){ __m128i a=_mm_setzero_si128(); int k=0;
+    ib_uw i; for(i=0;i<iters;i++) a=_mm_xor_si128(a,_mm_cvtsi32_si128(g_ibuf[NEXTK(k,16)]));
     return ib_sig128(a); }
-static uint64_t k_movd_in_tp(unsigned long long iters){ __m128i a=_mm_setzero_si128(),b=a,c=a,d=a; int k=0; unsigned long long i;
+static uint64_t k_movd_in_tp(ib_uw iters){ __m128i a=_mm_setzero_si128(),b=a,c=a,d=a; int k=0; ib_uw i;
     for(i=0;i<iters;i++){ a=_mm_xor_si128(a,_mm_cvtsi32_si128(g_ibuf[NEXTK(k,16)]));
         b=_mm_xor_si128(b,_mm_cvtsi32_si128(g_ibuf[NEXTK(k,16)]));
         c=_mm_xor_si128(c,_mm_cvtsi32_si128(g_ibuf[NEXTK(k,16)]));
         d=_mm_xor_si128(d,_mm_cvtsi32_si128(g_ibuf[NEXTK(k,16)])); }
     return ib_sig128(a)^ib_sig128(b)^ib_sig128(c)^ib_sig128(d); }
-static uint64_t k_movd_out(unsigned long long iters){ unsigned x=0; int k=0; unsigned long long i;
+static uint64_t k_movd_out(ib_uw iters){ unsigned x=0; int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); x=(x<<1)|(x>>31); x^=(unsigned)_mm_cvtsi128_si32(w); }
     return x; }
-static uint64_t k_movd_out_tp(unsigned long long iters){ unsigned x=0,y=0,z=0,u=0; int k=0; unsigned long long i;
+static uint64_t k_movd_out_tp(ib_uw iters){ unsigned x=0,y=0,z=0,u=0; int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k);
         x=(x<<1)|(x>>31); x^=(unsigned)_mm_cvtsi128_si32(w);
         y=(y<<5)|(y>>27); y^=(unsigned)_mm_cvtsi128_si32(w);
         z=(z<<9)|(z>>23); z^=(unsigned)_mm_cvtsi128_si32(w);
         u=(u<<17)|(u>>15); u^=(unsigned)_mm_cvtsi128_si32(w); }
     return x^y^z^u; }
-static uint64_t k_pmovmskb(unsigned long long iters){ unsigned m=0; int k=0; unsigned long long i;
+static uint64_t k_pmovmskb(ib_uw iters){ unsigned m=0; int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k); m=(m<<1)|(m>>31); m^=(unsigned)_mm_movemask_epi8(w); }
     return m; }
-static uint64_t k_pmovmskb_tp(unsigned long long iters){ unsigned m=0,n=0,p=0,q=0; int k=0; unsigned long long i;
+static uint64_t k_pmovmskb_tp(ib_uw iters){ unsigned m=0,n=0,p=0,q=0; int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128i w=wrot(&k);
         m=(m<<1)|(m>>31); m^=(unsigned)_mm_movemask_epi8(w);
         n=(n<<5)|(n>>27); n^=(unsigned)_mm_movemask_epi8(w);
@@ -268,9 +268,9 @@ static uint64_t k_pmovmskb_tp(unsigned long long iters){ unsigned m=0,n=0,p=0,q=
     return m^n^p^q; }
 /* ptest/comisd/vptest 只写标志 -> 没有寄存器依赖链, lat 不给(见头注纪律 3);
  * 四条 asm 之间是标志 WAW 依赖, 测的就是「连续两条能否并行」 */
-__attribute__((target("sse4.1"))) static uint64_t k_ptest_tp(unsigned long long iters)
+__attribute__((target("sse4.1"))) static uint64_t k_ptest_tp(ib_uw iters)
 {
-    __m128i a = _mm_set1_epi32(0x0f0f0f0f); int k = 0; unsigned long long i;
+    __m128i a = _mm_set1_epi32(0x0f0f0f0f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m128i w = wrot(&k);
         __asm__ volatile("ptest %1,%0" : : "x"(a), "x"(w) : "cc");
         __asm__ volatile("ptest %1,%0" : : "x"(a), "x"(w) : "cc");
@@ -278,7 +278,7 @@ __attribute__((target("sse4.1"))) static uint64_t k_ptest_tp(unsigned long long 
         __asm__ volatile("ptest %1,%0" : : "x"(a), "x"(w) : "cc"); }
     return (uint64_t)_mm_movemask_epi8(a);
 }
-static uint64_t k_comisd_tp(unsigned long long iters){ __m128d a=_mm_set_pd(2.5,1.5); int k=0; unsigned long long i;
+static uint64_t k_comisd_tp(ib_uw iters){ __m128d a=_mm_set_pd(2.5,1.5); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ __m128d w=_mm_castsi128_pd(wrot(&k));
         __asm__ volatile("comisd %1,%0" : : "x"(a), "x"(w) : "cc");
         __asm__ volatile("comisd %1,%0" : : "x"(a), "x"(w) : "cc");
@@ -287,7 +287,7 @@ static uint64_t k_comisd_tp(unsigned long long iters){ __m128d a=_mm_set_pd(2.5,
     return ib_sig128(_mm_castpd_si128(a)); }
 /* 非临时流存储: 目的必须 16 字节对齐(g_obuf 是 64 对齐 + 步长 2 个 u64)。asm 钉死
  * 防「只留最后一次 store」; 结果 == 写进去的那块 -> 不上 KAT 表 */
-static uint64_t k_movntdq_tp(unsigned long long iters){ __m128i v=_mm_set1_epi32(0x5a5a5a5a); int k=0; unsigned long long i;
+static uint64_t k_movntdq_tp(ib_uw iters){ __m128i v=_mm_set1_epi32(0x5a5a5a5a); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ int j=NEXTK(k,16); uint64_t *p0=&g_obuf[j<<1], *p1=&g_obuf[((j+4)&15)<<1],
         *p2=&g_obuf[((j+8)&15)<<1], *p3=&g_obuf[((j+12)&15)<<1];
         __asm__ volatile("movntdq %0,(%1)" :: "x"(v), "r"(p0) : "memory");
@@ -300,9 +300,9 @@ static uint64_t k_movntdq_tp(unsigned long long iters){ __m128i v=_mm_set1_epi32
  * 值只用合法位: 0x5f80 = 默认 0x1f80 之上只把 RC 置成 10b(向 -inf), 保留位一律
  * 留 0 —— 拿保留位置 1 去 ldmxcsr 是 #GP, 不是被测语义 */
 #define MXCSR_RC_DOWN  0x5f80u
-static uint64_t k_ldmxcsr_tp(unsigned long long iters)
+static uint64_t k_ldmxcsr_tp(ib_uw iters)
 {
-    uint32_t saved = 0; unsigned long long i; int k = 0;
+    uint32_t saved = 0; ib_uw i; int k = 0;
     __asm__ volatile("stmxcsr (%0)" : : "r"(&saved) : "memory");   /* 无输出操作数 -> 编号从 %0 起 */
     for (i = 0; i < iters; i++) {
         uint32_t *p = &g_csr[NEXTK(k, 8)];
@@ -311,9 +311,9 @@ static uint64_t k_ldmxcsr_tp(unsigned long long iters)
     __asm__ volatile("ldmxcsr (%0)" : : "r"(&saved) : "memory");
     return saved;
 }
-static uint64_t k_stmxcsr_tp(unsigned long long iters)
+static uint64_t k_stmxcsr_tp(ib_uw iters)
 {
-    uint32_t v = 0; unsigned long long i; int k = 0;
+    uint32_t v = 0; ib_uw i; int k = 0;
     for (i = 0; i < iters; i++) {
         uint32_t *p = &g_csr[NEXTK(k, 8)];
         __asm__ volatile("stmxcsr (%0)" : : "r"(p) : "memory");
@@ -323,38 +323,38 @@ static uint64_t k_stmxcsr_tp(unsigned long long iters)
 }
 
 /* ==================== 5. 浮点转换/舍入族(结果精确可反算 -> 上表) ==================== */
-static uint64_t k_cvtsi2sd(unsigned long long iters){ __m128d a=_mm_set_pd(0.5,0.25); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++) a=_mm_xor_pd(a,_mm_cvtsi32_sd(_mm_setzero_pd(),g_ibuf[NEXTK(k,16)]));
+static uint64_t k_cvtsi2sd(ib_uw iters){ __m128d a=_mm_set_pd(0.5,0.25); int k=0;
+    ib_uw i; for(i=0;i<iters;i++) a=_mm_xor_pd(a,_mm_cvtsi32_sd(_mm_setzero_pd(),g_ibuf[NEXTK(k,16)]));
     return ib_sig128(_mm_castpd_si128(a)); }
-static uint64_t k_cvtsi2sd_tp(unsigned long long iters){ __m128d a=_mm_set_pd(0.5,0.25),b=a,c=a,d=a; int k=0; unsigned long long i;
+static uint64_t k_cvtsi2sd_tp(ib_uw iters){ __m128d a=_mm_set_pd(0.5,0.25),b=a,c=a,d=a; int k=0; ib_uw i;
     for(i=0;i<iters;i++){ const __m128d z=_mm_setzero_pd();
         a=_mm_xor_pd(a,_mm_cvtsi32_sd(z,g_ibuf[NEXTK(k,16)])); b=_mm_xor_pd(b,_mm_cvtsi32_sd(z,g_ibuf[NEXTK(k,16)]));
         c=_mm_xor_pd(c,_mm_cvtsi32_sd(z,g_ibuf[NEXTK(k,16)])); d=_mm_xor_pd(d,_mm_cvtsi32_sd(z,g_ibuf[NEXTK(k,16)])); }
     return ib_sig128(_mm_castpd_si128(a))^ib_sig128(_mm_castpd_si128(b))^
            ib_sig128(_mm_castpd_si128(c))^ib_sig128(_mm_castpd_si128(d)); }
-static uint64_t k_cvtdq2pd(unsigned long long iters){ __m128i v=_mm_setzero_si128(); __m128d a=_mm_set_pd(1.5,0.5); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ v=_mm_xor_si128(v,wrot(&k)); a=_mm_xor_pd(a,_mm_cvtepi32_pd(v)); }
+static uint64_t k_cvtdq2pd(ib_uw iters){ __m128i v=_mm_setzero_si128(); __m128d a=_mm_set_pd(1.5,0.5); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ v=_mm_xor_si128(v,wrot(&k)); a=_mm_xor_pd(a,_mm_cvtepi32_pd(v)); }
     return ib_sig128(_mm_castpd_si128(a)); }
-static uint64_t k_cvtdq2pd_tp(unsigned long long iters){ __m128i v=_mm_setzero_si128(); __m128d a=_mm_set_pd(1.5,0.5),
-    b=_mm_set_pd(2.5,3.5),c=_mm_set_pd(0.25,0.125),d=_mm_set_pd(7.75,8.125); int k=0; unsigned long long i;
+static uint64_t k_cvtdq2pd_tp(ib_uw iters){ __m128i v=_mm_setzero_si128(); __m128d a=_mm_set_pd(1.5,0.5),
+    b=_mm_set_pd(2.5,3.5),c=_mm_set_pd(0.25,0.125),d=_mm_set_pd(7.75,8.125); int k=0; ib_uw i;
     for(i=0;i<iters;i++){ v=_mm_xor_si128(v,wrot(&k)); __m128d r=_mm_cvtepi32_pd(v);
         a=_mm_xor_pd(a,r); b=_mm_xor_pd(b,r); c=_mm_xor_pd(c,r); d=_mm_xor_pd(d,r); }
     return ib_sig128(_mm_castpd_si128(a))^ib_sig128(_mm_castpd_si128(b))^
            ib_sig128(_mm_castpd_si128(c))^ib_sig128(_mm_castpd_si128(d)); }
 /* roundsd $4 = 最近-取偶 + 隐藏不精确异常; 高半来自 dst -> dst==src 是合法形制,
  * 而「高半原样保留」这条 merge 语义正是探针要盯的地方 */
-__attribute__((target("sse4.1"))) static uint64_t k_roundsd(unsigned long long iters)
+__attribute__((target("sse4.1"))) static uint64_t k_roundsd(ib_uw iters)
 {
-    __m128d a = _mm_set_pd(2.5, 1.25); int k = 0; unsigned long long i;
+    __m128d a = _mm_set_pd(2.5, 1.25); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m128d w = _mm_castsi128_pd(wrot(&k));
         a = _mm_xor_pd(_mm_round_sd(a, w, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC), w); }
     return ib_sig128(_mm_castpd_si128(a));
 }
-__attribute__((target("sse4.1"))) static uint64_t k_roundsd_tp(unsigned long long iters)
+__attribute__((target("sse4.1"))) static uint64_t k_roundsd_tp(ib_uw iters)
 {
     __m128d a = _mm_set_pd(2.5, 1.25), b = _mm_set_pd(3.5, 0.75),
            c = _mm_set_pd(4.5, -1.5), d = _mm_set_pd(5.5, 12.25);
-    int k = 0; unsigned long long i;
+    int k = 0; ib_uw i;
     const int RM = _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC;
     for (i = 0; i < iters; i++) { __m128d w = _mm_castsi128_pd(wrot(&k));
         a = _mm_xor_pd(_mm_round_sd(a, w, RM), w);

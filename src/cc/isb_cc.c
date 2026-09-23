@@ -64,9 +64,9 @@
 
 /* ---------------- jcc(16: 实测 15 + jno 锚点) ---------------- */
 /* ---- je__: IB_K_JCC ---- */
-static uint64_t k_je__(unsigned long long it)                                     
+static uint64_t k_je__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -75,9 +75,9 @@ static uint64_t k_je__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_je___tp(unsigned long long it)                                
+static uint64_t k_je___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -110,9 +110,9 @@ static inline void k_je___kat(int kk, ib_kv *g)
 }
 
 /* ---- jne__: IB_K_JCC ---- */
-static uint64_t k_jne__(unsigned long long it)                                     
+static uint64_t k_jne__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -121,9 +121,9 @@ static uint64_t k_jne__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jne___tp(unsigned long long it)                                
+static uint64_t k_jne___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -156,9 +156,9 @@ static inline void k_jne___kat(int kk, ib_kv *g)
 }
 
 /* ---- jl__: IB_K_JCC ---- */
-static uint64_t k_jl__(unsigned long long it)                                     
+static uint64_t k_jl__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -167,9 +167,9 @@ static uint64_t k_jl__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jl___tp(unsigned long long it)                                
+static uint64_t k_jl___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -202,9 +202,9 @@ static inline void k_jl___kat(int kk, ib_kv *g)
 }
 
 /* ---- jge__: IB_K_JCC ---- */
-static uint64_t k_jge__(unsigned long long it)                                     
+static uint64_t k_jge__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -213,9 +213,9 @@ static uint64_t k_jge__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jge___tp(unsigned long long it)                                
+static uint64_t k_jge___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -248,9 +248,9 @@ static inline void k_jge___kat(int kk, ib_kv *g)
 }
 
 /* ---- jle__: IB_K_JCC ---- */
-static uint64_t k_jle__(unsigned long long it)                                     
+static uint64_t k_jle__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -259,9 +259,9 @@ static uint64_t k_jle__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jle___tp(unsigned long long it)                                
+static uint64_t k_jle___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -294,9 +294,9 @@ static inline void k_jle___kat(int kk, ib_kv *g)
 }
 
 /* ---- jg__: IB_K_JCC ---- */
-static uint64_t k_jg__(unsigned long long it)                                     
+static uint64_t k_jg__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -305,9 +305,9 @@ static uint64_t k_jg__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jg___tp(unsigned long long it)                                
+static uint64_t k_jg___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -340,9 +340,9 @@ static inline void k_jg___kat(int kk, ib_kv *g)
 }
 
 /* ---- jb__: IB_K_JCC ---- */
-static uint64_t k_jb__(unsigned long long it)                                     
+static uint64_t k_jb__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -351,9 +351,9 @@ static uint64_t k_jb__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jb___tp(unsigned long long it)                                
+static uint64_t k_jb___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -386,9 +386,9 @@ static inline void k_jb___kat(int kk, ib_kv *g)
 }
 
 /* ---- jae__: IB_K_JCC ---- */
-static uint64_t k_jae__(unsigned long long it)                                     
+static uint64_t k_jae__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -397,9 +397,9 @@ static uint64_t k_jae__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jae___tp(unsigned long long it)                                
+static uint64_t k_jae___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -432,9 +432,9 @@ static inline void k_jae___kat(int kk, ib_kv *g)
 }
 
 /* ---- jbe__: IB_K_JCC ---- */
-static uint64_t k_jbe__(unsigned long long it)                                     
+static uint64_t k_jbe__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -443,9 +443,9 @@ static uint64_t k_jbe__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jbe___tp(unsigned long long it)                                
+static uint64_t k_jbe___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -478,9 +478,9 @@ static inline void k_jbe___kat(int kk, ib_kv *g)
 }
 
 /* ---- ja__: IB_K_JCC ---- */
-static uint64_t k_ja__(unsigned long long it)                                     
+static uint64_t k_ja__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -489,9 +489,9 @@ static uint64_t k_ja__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_ja___tp(unsigned long long it)                                
+static uint64_t k_ja___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -524,9 +524,9 @@ static inline void k_ja___kat(int kk, ib_kv *g)
 }
 
 /* ---- js__: IB_K_JCC ---- */
-static uint64_t k_js__(unsigned long long it)                                     
+static uint64_t k_js__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -535,9 +535,9 @@ static uint64_t k_js__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_js___tp(unsigned long long it)                                
+static uint64_t k_js___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -570,9 +570,9 @@ static inline void k_js___kat(int kk, ib_kv *g)
 }
 
 /* ---- jns__: IB_K_JCC ---- */
-static uint64_t k_jns__(unsigned long long it)                                     
+static uint64_t k_jns__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -581,9 +581,9 @@ static uint64_t k_jns__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jns___tp(unsigned long long it)                                
+static uint64_t k_jns___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -616,9 +616,9 @@ static inline void k_jns___kat(int kk, ib_kv *g)
 }
 
 /* ---- jp__: IB_K_JCC ---- */
-static uint64_t k_jp__(unsigned long long it)                                     
+static uint64_t k_jp__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -627,9 +627,9 @@ static uint64_t k_jp__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jp___tp(unsigned long long it)                                
+static uint64_t k_jp___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -662,9 +662,9 @@ static inline void k_jp___kat(int kk, ib_kv *g)
 }
 
 /* ---- jnp__: IB_K_JCC ---- */
-static uint64_t k_jnp__(unsigned long long it)                                     
+static uint64_t k_jnp__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -673,9 +673,9 @@ static uint64_t k_jnp__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jnp___tp(unsigned long long it)                                
+static uint64_t k_jnp___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -708,9 +708,9 @@ static inline void k_jnp___kat(int kk, ib_kv *g)
 }
 
 /* ---- jo__: IB_K_JCC ---- */
-static uint64_t k_jo__(unsigned long long it)                                     
+static uint64_t k_jo__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -719,9 +719,9 @@ static uint64_t k_jo__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jo___tp(unsigned long long it)                                
+static uint64_t k_jo___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -754,9 +754,9 @@ static inline void k_jo___kat(int kk, ib_kv *g)
 }
 
 /* ---- jno__: IB_K_JCC ---- */
-static uint64_t k_jno__(unsigned long long it)                                     
+static uint64_t k_jno__(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     uint8_t n = 0;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -765,9 +765,9 @@ static uint64_t k_jno__(unsigned long long it)
                 : [a] "+a"(a), [n] "+q"(n) : : "memory");                   
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_jno___tp(unsigned long long it)                                
+static uint64_t k_jno___tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     uint8_t n = 0, m = 0;                                                         
     for (i = 0; i < it; i++) {                                                    
@@ -802,9 +802,9 @@ static inline void k_jno___kat(int kk, ib_kv *g)
 
 /* ---------------- setcc(13, 全部 r.f.b/flags) ---------------- */
 /* ---- sete_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_sete_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_sete_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -815,9 +815,9 @@ static uint64_t k_sete_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_sete_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_sete_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -853,9 +853,9 @@ static inline void k_sete_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setne_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setne_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setne_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -866,9 +866,9 @@ static uint64_t k_setne_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setne_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setne_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -904,9 +904,9 @@ static inline void k_setne_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setl_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setl_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setl_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -917,9 +917,9 @@ static uint64_t k_setl_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setl_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setl_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -955,9 +955,9 @@ static inline void k_setl_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setge_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setge_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setge_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -968,9 +968,9 @@ static uint64_t k_setge_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setge_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setge_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1006,9 +1006,9 @@ static inline void k_setge_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setle_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setle_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setle_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1019,9 +1019,9 @@ static uint64_t k_setle_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setle_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setle_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1057,9 +1057,9 @@ static inline void k_setle_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setg_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setg_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setg_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1070,9 +1070,9 @@ static uint64_t k_setg_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setg_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setg_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1108,9 +1108,9 @@ static inline void k_setg_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setb_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setb_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setb_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1121,9 +1121,9 @@ static uint64_t k_setb_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setb_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setb_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1159,9 +1159,9 @@ static inline void k_setb_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setae_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setae_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setae_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1172,9 +1172,9 @@ static uint64_t k_setae_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setae_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setae_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1210,9 +1210,9 @@ static inline void k_setae_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setbe_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setbe_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setbe_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1223,9 +1223,9 @@ static uint64_t k_setbe_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setbe_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setbe_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1261,9 +1261,9 @@ static inline void k_setbe_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- seta_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_seta_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_seta_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1274,9 +1274,9 @@ static uint64_t k_seta_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_seta_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_seta_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1312,9 +1312,9 @@ static inline void k_seta_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- sets_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_sets_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_sets_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1325,9 +1325,9 @@ static uint64_t k_sets_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_sets_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_sets_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1363,9 +1363,9 @@ static inline void k_sets_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setns_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setns_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setns_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1376,9 +1376,9 @@ static uint64_t k_setns_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setns_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setns_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1414,9 +1414,9 @@ static inline void k_setns_r_f_b_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- setnp_r_f_b_flags: IB_K_SETCC ---- */
-static uint64_t k_setnp_r_f_b_flags(unsigned long long it)                                     
+static uint64_t k_setnp_r_f_b_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1);                                                  
     IB_WTY s = (IB_WTY)0;                                                                 
     uint8_t n = 0;                                                                
@@ -1427,9 +1427,9 @@ static uint64_t k_setnp_r_f_b_flags(unsigned long long it)
                 : [a] "+a"(a), [s] "+q"(s), [n] "+q"(n) : : "memory");      
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_setnp_r_f_b_flags_tp(unsigned long long it)                                
+static uint64_t k_setnp_r_f_b_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_WTY a = (IB_WTY)(IB_SEED(0) | 1), e = (IB_WTY)(IB_SEED(2) | 1);                        
     IB_WTY s = (IB_WTY)0, u = (IB_WTY)0;                                                      
     uint8_t n = 0, m = 0;                                                         
@@ -1467,9 +1467,9 @@ static inline void k_setnp_r_f_b_flags_kat(int kk, ib_kv *g)
 
 /* ---------------- cmovcc 32 位形态(两 ABI 皆有) ---------------- */
 /* ---- cmovl_r_rc_l_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovl_r_rc_l_flags(unsigned long long it)                                     
+static uint64_t k_cmovl_r_rc_l_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), w = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1481,9 +1481,9 @@ static uint64_t k_cmovl_r_rc_l_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovl_r_rc_l_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovl_r_rc_l_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), e = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL w = (IB_UL)(IB_SEED(4) | 1), x = (IB_UL)(IB_SEED(6) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(8) | 1), c = (IB_UL)(IB_SEED(10) | 1);                       
@@ -1520,9 +1520,9 @@ static inline void k_cmovl_r_rc_l_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovg_r_rc_l_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovg_r_rc_l_flags(unsigned long long it)                                     
+static uint64_t k_cmovg_r_rc_l_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), w = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1534,9 +1534,9 @@ static uint64_t k_cmovg_r_rc_l_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovg_r_rc_l_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovg_r_rc_l_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), e = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL w = (IB_UL)(IB_SEED(4) | 1), x = (IB_UL)(IB_SEED(6) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(8) | 1), c = (IB_UL)(IB_SEED(10) | 1);                       
@@ -1573,9 +1573,9 @@ static inline void k_cmovg_r_rc_l_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovb_r_rc_l_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovb_r_rc_l_flags(unsigned long long it)                                     
+static uint64_t k_cmovb_r_rc_l_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), w = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1587,9 +1587,9 @@ static uint64_t k_cmovb_r_rc_l_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovb_r_rc_l_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovb_r_rc_l_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), e = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL w = (IB_UL)(IB_SEED(4) | 1), x = (IB_UL)(IB_SEED(6) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(8) | 1), c = (IB_UL)(IB_SEED(10) | 1);                       
@@ -1626,9 +1626,9 @@ static inline void k_cmovb_r_rc_l_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovs_r_rc_l_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovs_r_rc_l_flags(unsigned long long it)                                     
+static uint64_t k_cmovs_r_rc_l_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), w = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1640,9 +1640,9 @@ static uint64_t k_cmovs_r_rc_l_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovs_r_rc_l_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovs_r_rc_l_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), e = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL w = (IB_UL)(IB_SEED(4) | 1), x = (IB_UL)(IB_SEED(6) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(8) | 1), c = (IB_UL)(IB_SEED(10) | 1);                       
@@ -1679,9 +1679,9 @@ static inline void k_cmovs_r_rc_l_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovo_r_rc_l_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovo_r_rc_l_flags(unsigned long long it)                                     
+static uint64_t k_cmovo_r_rc_l_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), w = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1693,9 +1693,9 @@ static uint64_t k_cmovo_r_rc_l_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovo_r_rc_l_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovo_r_rc_l_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), e = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL w = (IB_UL)(IB_SEED(4) | 1), x = (IB_UL)(IB_SEED(6) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(8) | 1), c = (IB_UL)(IB_SEED(10) | 1);                       
@@ -1732,9 +1732,9 @@ static inline void k_cmovo_r_rc_l_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovno_r_rc_l_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovno_r_rc_l_flags(unsigned long long it)                                     
+static uint64_t k_cmovno_r_rc_l_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), w = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1746,9 +1746,9 @@ static uint64_t k_cmovno_r_rc_l_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovno_r_rc_l_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovno_r_rc_l_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)(IB_SEED(0) | 1), e = (IB_UL)(IB_SEED(2) | 1);                        
     IB_UL w = (IB_UL)(IB_SEED(4) | 1), x = (IB_UL)(IB_SEED(6) | 1);                        
     IB_UL b = (IB_UL)(IB_SEED(8) | 1), c = (IB_UL)(IB_SEED(10) | 1);                       
@@ -1788,9 +1788,9 @@ static inline void k_cmovno_r_rc_l_flags_kat(int kk, ib_kv *g)
 /* ---------------- cmovcc 64 位形态(仅 x86_64) ---------------- */
 #ifdef __x86_64__
 /* ---- cmove_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmove_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmove_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1802,9 +1802,9 @@ static uint64_t k_cmove_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmove_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmove_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -1841,9 +1841,9 @@ static inline void k_cmove_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovne_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovne_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovne_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1855,9 +1855,9 @@ static uint64_t k_cmovne_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovne_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovne_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -1894,9 +1894,9 @@ static inline void k_cmovne_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovge_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovge_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovge_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1908,9 +1908,9 @@ static uint64_t k_cmovge_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovge_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovge_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -1947,9 +1947,9 @@ static inline void k_cmovge_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovle_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovle_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovle_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -1961,9 +1961,9 @@ static uint64_t k_cmovle_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovle_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovle_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -2000,9 +2000,9 @@ static inline void k_cmovle_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovae_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovae_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovae_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -2014,9 +2014,9 @@ static uint64_t k_cmovae_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovae_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovae_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -2053,9 +2053,9 @@ static inline void k_cmovae_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovbe_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovbe_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovbe_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -2067,9 +2067,9 @@ static uint64_t k_cmovbe_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovbe_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovbe_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -2106,9 +2106,9 @@ static inline void k_cmovbe_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmova_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmova_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmova_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -2120,9 +2120,9 @@ static uint64_t k_cmova_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmova_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmova_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -2159,9 +2159,9 @@ static inline void k_cmova_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovns_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovns_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovns_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -2173,9 +2173,9 @@ static uint64_t k_cmovns_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovns_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovns_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       
@@ -2212,9 +2212,9 @@ static inline void k_cmovns_r_rc_q_flags_kat(int kk, ib_kv *g)
 }
 
 /* ---- cmovp_r_rc_q_flags: IB_K_CMOV ---- */
-static uint64_t k_cmovp_r_rc_q_flags(unsigned long long it)                                     
+static uint64_t k_cmovp_r_rc_q_flags(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), w = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(4) | 1);                                                  
     uint8_t n = 0;                                                                
@@ -2226,9 +2226,9 @@ static uint64_t k_cmovp_r_rc_q_flags(unsigned long long it)
                 : : "memory");                                              
     return IB_S1((uint64_t)a + 1);                                                
 }                                                                                 
-static uint64_t k_cmovp_r_rc_q_flags_tp(unsigned long long it)                                
+static uint64_t k_cmovp_r_rc_q_flags_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), e = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ w = (IB_UQ)(IB_SEED(4) | 1), x = (IB_UQ)(IB_SEED(6) | 1);                        
     IB_UQ b = (IB_UQ)(IB_SEED(8) | 1), c = (IB_UQ)(IB_SEED(10) | 1);                       

@@ -28,6 +28,11 @@
 #include "ib_fields.h"          /* 只有宏: 列名/中文名/记录类型/状态/占位 */
 
 /* 空 asm 内存屏障(编译器可移植: 各 gcc 目标都接受 ""), 阻断把计时循环并进前后。 */
+/* 本机字长整型: i386=32、x64/loongarch64=64。内核迭代数与循环计数器取本机字长 ——
+ * 若取 64 位, i386 上每轮多一条 `add $1,%eax; adc $0,%edx`(进位对), 在旗标写昂贵的
+ * i386 路径上把整轮延迟钉在脚手架地板, 淹没被测浮点运算的真实延迟(与 src/cint 同源)。 */
+typedef uintptr_t cf_uw;
+
 #define CF_BARRIER() __asm__ __volatile__("" ::: "memory")
 
 /* 单调时钟整数纳秒(与 ib_now 同口径: 全整数, 不引浮点入计时路径)。 */
@@ -60,12 +65,12 @@ static uint64_t cf_fold(const void *p, int n)
  *   - acc 是循环携带的串行浮点依赖, 无法向量化/闭式化 -> 测到的就是单条指令延迟。
  * tag: f32/f64/f80/f128; TYPE: C 类型名。 */
 #define CF_LAT(TYPE, tag, op, EXPR)                                         \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(cf_uw iters)                  \
 {                                                                           \
     volatile TYPE vseed = (TYPE)1.0;                                        \
     TYPE b = vseed;                                                         \
     TYPE acc = vseed;                                                       \
-    unsigned long long i;                                                   \
+    cf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = (EXPR);                                                       \
     CF_BARRIER();                                                           \
@@ -77,12 +82,12 @@ static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
  *     安全迭代使 acc 全程规格化、域内(不落 0/denormal 快路径), 测到的就是单条 fn 调用的依赖延迟。
  *   - EXPR 里按 TYPE 选用对应函数名(sinf/sin/sinl ...)。tag 同 CF_LAT。 */
 #define CF_LAT1(TYPE, tag, op, EXPR)                                        \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                  \
+static uint64_t lat_##tag##_##op(cf_uw iters)                  \
 {                                                                           \
     volatile TYPE vseed = (TYPE)1.0;                                        \
     TYPE b = vseed;                                                         \
     TYPE acc = vseed;                                                       \
-    unsigned long long i;                                                   \
+    cf_uw i;                                                   \
     for (i = 0; i < iters; i++)                                             \
         acc = (EXPR);                                                       \
     CF_BARRIER();                                                           \
@@ -126,7 +131,7 @@ CF_LAT1(long double, f80,  log,  logl(acc + b))
 
 struct cf_case {
     const char *name;
-    uint64_t (*lat)(unsigned long long iters);
+    uint64_t (*lat)(cf_uw iters);
 };
 static const struct cf_case g_cases[] = {
     { "f32_add",  lat_f32_add  }, { "f32_sub",  lat_f32_sub  },
@@ -227,7 +232,7 @@ static void cf_precision_info(const char *abi)
 int main(int argc, char **argv)
 {
     const char *abi = "x86_64", *os = "linux";
-    unsigned long long iters = 200000;   /* 仅 lat, 默认 20 万次(软浮点 128 位也不慢爆) */
+    cf_uw iters = 200000;   /* 仅 lat, 默认 20 万次(软浮点 128 位也不慢爆) */
     const char *only = NULL;
     const char *bits;
     int i, ok = 0, tot = 0;
@@ -248,7 +253,7 @@ int main(int argc, char **argv)
     }
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--iters") && i + 1 < argc) {
-            iters = strtoull(argv[++i], NULL, 0);
+            iters = (cf_uw)strtoull(argv[++i], NULL, 0);
             if (!iters)
                 iters = 200000;
         } else if (!strncmp(argv[i], "--only=", 7)) {

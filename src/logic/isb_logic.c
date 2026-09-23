@@ -33,17 +33,17 @@
 /* ---------------- 64 位形态(仅 x86_64) ---------------- */
 #ifdef __x86_64__
 /* ---- and_r_r_q: IB_K_RR ---- */
-static uint64_t k_and_r_r_q(unsigned long long it)                                     
+static uint64_t k_and_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("andq" " %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_and_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_and_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     IB_UQ c = (IB_UQ)IB_SEED(2), d = (IB_UQ)IB_SEED(3);                                    
     IB_UQ e = (IB_UQ)IB_SEED(4), f = (IB_UQ)IB_SEED(5);                                    
@@ -75,17 +75,17 @@ static inline void k_and_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- and_r_i_q: IB_K_RI ---- */
-static uint64_t k_and_r_i_q(unsigned long long it)                                     
+static uint64_t k_and_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("andq" " " IB_IMM ",%[a]" : [a] "+r"(a) : : "cc");                  
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_and_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_and_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -115,9 +115,9 @@ static inline void k_and_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- or_r_m_q_rip: IB_K_SRC ---- */
-static uint64_t k_or_r_m_q_rip(unsigned long long it)                                     
+static uint64_t k_or_r_m_q_rip(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0);                                                        
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -127,9 +127,9 @@ static uint64_t k_or_r_m_q_rip(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_or_r_m_q_rip_tp(unsigned long long it)                                
+static uint64_t k_or_r_m_q_rip_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -167,17 +167,17 @@ static inline void k_or_r_m_q_rip_kat(int kk, ib_kv *g)
     g->outf = (uint64_t)fl & (IB_FLG_MASK_LOGIC);
 }
 
-static uint64_t k_or_r_r_q(unsigned long long it)                                     
+static uint64_t k_or_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("orq" " %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_or_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_or_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     IB_UQ c = (IB_UQ)IB_SEED(2), d = (IB_UQ)IB_SEED(3);                                    
     IB_UQ e = (IB_UQ)IB_SEED(4), f = (IB_UQ)IB_SEED(5);                                    
@@ -209,17 +209,17 @@ static inline void k_or_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- or_r_i_q: IB_K_RI ---- */
-static uint64_t k_or_r_i_q(unsigned long long it)                                     
+static uint64_t k_or_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("orq" " " IB_IMM ",%[a]" : [a] "+r"(a) : : "cc");                  
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_or_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_or_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -249,17 +249,17 @@ static inline void k_or_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- xor_r_r_q: IB_K_RR ---- */
-static uint64_t k_xor_r_r_q(unsigned long long it)                                     
+static uint64_t k_xor_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("xorq" " %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_xor_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_xor_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     IB_UQ c = (IB_UQ)IB_SEED(2), d = (IB_UQ)IB_SEED(3);                                    
     IB_UQ e = (IB_UQ)IB_SEED(4), f = (IB_UQ)IB_SEED(5);                                    
@@ -291,17 +291,17 @@ static inline void k_xor_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- not_r_r_q: IB_K_R1 ---- */
-static uint64_t k_not_r_r_q(unsigned long long it)                                     
+static uint64_t k_not_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("notq" " %[a]" : [a] "+r"(a) : : "cc");                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_not_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_not_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -334,17 +334,17 @@ static inline void k_not_r_r_q_kat(int kk, ib_kv *g)
 
 /* ---------------- 两 ABI 共有形态 ---------------- */
 /* ---- and_r_i_l: IB_K_RI ---- */
-static uint64_t k_and_r_i_l(unsigned long long it)                                     
+static uint64_t k_and_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("andl" " " IB_IMM ",%[a]" : [a] "+r"(a) : : "cc");                  
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_and_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_and_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -374,17 +374,17 @@ static inline void k_and_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- and_r_r_l: IB_K_RR ---- */
-static uint64_t k_and_r_r_l(unsigned long long it)                                     
+static uint64_t k_and_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("andl" " %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_and_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_and_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     IB_UL c = (IB_UL)IB_SEED(2), d = (IB_UL)IB_SEED(3);                                    
     IB_UL e = (IB_UL)IB_SEED(4), f = (IB_UL)IB_SEED(5);                                    
@@ -416,17 +416,17 @@ static inline void k_and_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- or_r_r_l: IB_K_RR ---- */
-static uint64_t k_or_r_r_l(unsigned long long it)                                     
+static uint64_t k_or_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("orl" " %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_or_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_or_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     IB_UL c = (IB_UL)IB_SEED(2), d = (IB_UL)IB_SEED(3);                                    
     IB_UL e = (IB_UL)IB_SEED(4), f = (IB_UL)IB_SEED(5);                                    
@@ -458,17 +458,17 @@ static inline void k_or_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- or_r_r_b: IB_K_RR8 ---- */
-static uint64_t k_or_r_r_b(unsigned long long it)                                     
+static uint64_t k_or_r_r_b(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), b = (IB_UB)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("orb" " %[b],%[a]" : [a] "+a"(a) : [b] "b"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_or_r_r_b_tp(unsigned long long it)                                
+static uint64_t k_or_r_r_b_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), b = (IB_UB)IB_SEED(1);                                    
     IB_UB c = (IB_UB)IB_SEED(2), d = (IB_UB)IB_SEED(3);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -496,17 +496,17 @@ static inline void k_or_r_r_b_kat(int kk, ib_kv *g)
 }
 
 /* ---- or_r_i_l: IB_K_RI ---- */
-static uint64_t k_or_r_i_l(unsigned long long it)                                     
+static uint64_t k_or_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("orl" " " IB_IMM ",%[a]" : [a] "+r"(a) : : "cc");                  
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_or_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_or_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -536,17 +536,17 @@ static inline void k_or_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- xor_r_r_l: IB_K_RR ---- */
-static uint64_t k_xor_r_r_l(unsigned long long it)                                     
+static uint64_t k_xor_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++)                                                      
         __asm__("xorl" " %[b],%[a]" : [a] "+r"(a) : [b] "r"(b) : "cc");             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_xor_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_xor_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     IB_UL c = (IB_UL)IB_SEED(2), d = (IB_UL)IB_SEED(3);                                    
     IB_UL e = (IB_UL)IB_SEED(4), f = (IB_UL)IB_SEED(5);                                    
@@ -578,17 +578,17 @@ static inline void k_xor_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- not_r_r_l: IB_K_R1 ---- */
-static uint64_t k_not_r_r_l(unsigned long long it)                                     
+static uint64_t k_not_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("notl" " %[a]" : [a] "+r"(a) : : "cc");                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_not_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_not_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     for (i = 0; i < it; i++) {                                                    
@@ -618,17 +618,17 @@ static inline void k_not_r_r_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- not_r_r_b: IB_K_R18 ---- */
-static uint64_t k_not_r_r_b(unsigned long long it)                                     
+static uint64_t k_not_r_r_b(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0);                                                        
     for (i = 0; i < it; i++)                                                      
         __asm__("notb" " %[a]" : [a] "+a"(a) : : "cc");                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_not_r_r_b_tp(unsigned long long it)                                
+static uint64_t k_not_r_r_b_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), c = (IB_UB)IB_SEED(2);                                    
     for (i = 0; i < it; i++) {                                                    
         __asm__("notb" " %[a]" : [a] "+a"(a) : : "cc");                             

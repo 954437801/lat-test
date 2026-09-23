@@ -36,10 +36,10 @@
  * 期望 o0 == i0(SDM: FILD m64int "loaded without rounding errors"; FISTP m64int
  * 对量程内整数值精确存回), o1 == 0(无异常: 状态字 IE..ES/Cx/TOP 全 0, 弹栈后 TOP
  * 回 0)。这条是缺陷本体的**主探针**: LATX 按 double 中转时 XVEC[1](2^53+1)必丢。 */
-uint64_t k_fild_fistp_q_rt_tp(unsigned long long iters)
+uint64_t k_fild_fistp_q_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, XVEC[0]);
     void *d = fput(8, IB_POISON);
 
@@ -54,10 +54,10 @@ uint64_t k_fild_fistp_q_rt_tp(unsigned long long iters)
  * 期望 o0 == i0(32 位整数在 80 位与 double 里都精确, 故本条**抓不到缺陷**, 它是
  * "缺陷需要 >=2^53 入值"的边界证据); o1 == 1: 目的槽高 4 字节仍是 0xAA 哨兵 =>
  * 实际写宽是 4 字节(h 项实测), 抓"把 m32 形按 8 字节写"的翻译越界。 */
-uint64_t k_fild_fistp_d_rt_tp(unsigned long long iters)
+uint64_t k_fild_fistp_d_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, xd(0));
     void *d = fput(8, IB_POISON);
 
@@ -71,10 +71,10 @@ uint64_t k_fild_fistp_d_rt_tp(unsigned long long iters)
 /* ---- fild_fistp_w_rt: filds -> fistps(m16int 形态) ---- [解析]
  * m16int 装载形助记符是 filds = DF/0(被 as 拒的是 fildw), 存回形 fistps = DF/3,
  * 实测 2 字节写宽 + 弹栈。期望同 d_rt, o1 == 1: 高 6 字节仍是哨兵。 */
-uint64_t k_fild_fistp_w_rt_tp(unsigned long long iters)
+uint64_t k_fild_fistp_w_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, xw(0));
     void *d = fput(8, IB_POISON);
 
@@ -88,10 +88,10 @@ uint64_t k_fild_fistp_w_rt_tp(unsigned long long iters)
 /* ---- fild_fistp_q_neg: 负侧往返(0 - XVEC, 无符号回绕取补, 避开 -INT64_MIN 的 UB)
  * 期望 o0 == i0 且 o1 == 0。抓的是"按无符号搬进 double 再补符号"这类实现: 负数
  * 侧的量程判据与正数侧不同(INT64_MIN 的幅值 2^63 只有负侧能表示)。 */
-uint64_t k_fild_fistp_q_neg_tp(unsigned long long iters)
+uint64_t k_fild_fistp_q_neg_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, (uint64_t)0 - XVEC[5]);
     void *d = fput(8, IB_POISON);
 
@@ -106,10 +106,10 @@ uint64_t k_fild_fistp_q_neg_tp(unsigned long long iters)
  * 2^53 以上任何奇数都无法用 double 表示, 所以 |v|>=2^53 的 8 组里每一组的奇偶性
  * 都是一次"有没有被舍过"的检票; XVEC[0]/[1] 这一对(2^53 / 2^53+1)在原始向量里
  * 只有一个奇数, 这里补齐。期望 o0 == i0(|v|<=2^63-1, 量程内), o1 == 0。 */
-uint64_t k_fild_q_odd_rt_tp(unsigned long long iters)
+uint64_t k_fild_q_odd_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, XVEC[1] | 1ULL);
     void *d = fput(8, IB_POISON);
 
@@ -128,10 +128,10 @@ uint64_t k_fild_q_odd_rt_tp(unsigned long long iters)
  * "中途按 double 舍了一次", 而终点本来就是 double, 一次舍与两次舍在这里同值
  * —— 所以它是对照行: 若将来某台机器上 #1 挂了而这条没挂, 就说明丢位发生在
  * **整数存回**那一段而不是装载那一段。 */
-uint64_t k_fild_fstp_q_dbl_tp(unsigned long long iters)
+uint64_t k_fild_fstp_q_dbl_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, XVEC[1]);
     void *d = fput(8, IB_POISON);
 
@@ -146,10 +146,10 @@ uint64_t k_fild_fstp_q_dbl_tp(unsigned long long iters)
  * [解析] **单点定位装载精度的探针**: o0 = 尾数、o1 = 指数+符号, 期望 ext_form(i0)。
  * 80 位的 64 位尾数足以精确表示任意 int64, 所以期望与入值一一对应、与舍入档无关;
  * 只要翻译器在 FILD 里过了一次 double, o0 的低 11 位就会出现舍入痕迹。 */
-uint64_t k_fild_fstp_t_ext_tp(unsigned long long iters)
+uint64_t k_fild_fstp_t_ext_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, XVEC[1]);
     void *d = tput80(0, 0, 0);
 
@@ -164,10 +164,10 @@ uint64_t k_fild_fstp_t_ext_tp(unsigned long long iters)
  * 期望 o0 == 0x8000000000000000(integer indefinite)且 o1 == 0x0001(**只有 IE**)。
  * 实测 c 的落点: 越界是 #IA/IE **不是 OE**, 且 masked 异常**不置 ES**(bit7=0);
  * 2^63 刚好在界外一格, 所以它是"按有符号还是按无符号判量程"的分水岭。 */
-uint64_t k_fistp_q_indef_tp(unsigned long long iters)
+uint64_t k_fistp_q_indef_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, IVEC[0]);
     void *d = fput(8, IB_POISON);
 
@@ -182,10 +182,10 @@ uint64_t k_fistp_q_indef_tp(unsigned long long iters)
  * 期望 o0 == i0(输入本来就是整数, 截断无损), o1 == 0。FISTTP 按架构不受 RC 影响,
  * 这条钉住它的"i386 + SSE3 编码路径"(实测 fisttpll = DD/1, 弹栈、8 字节写宽);
  * RC 的影响面归 P2, PC 的忽略面归 P3, 不在这里混。 */
-uint64_t k_fisttp_q_rt_tp(unsigned long long iters)
+uint64_t k_fisttp_q_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, XVEC[1]);
     void *d = fput(8, IB_POISON);
 
@@ -203,10 +203,10 @@ uint64_t k_fisttp_q_rt_tp(unsigned long long iters)
  * (见文件头第 2 条与 ABI 对比脚本: x86_64 下照样执行且与 i386 同字), 所以
  * 这条登记成 i386 的理由是"没有编译器会发射", 不是"别的模式跑不出来"。
  * i1/o1 里的 se 只用低 16 位。 */
-uint64_t k_fld_t_fstp_t_rt_tp(unsigned long long iters)
+uint64_t k_fld_t_fstp_t_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     uint64_t m;
     uint16_t se;
     const void *s;
@@ -225,10 +225,10 @@ uint64_t k_fld_t_fstp_t_rt_tp(unsigned long long iters)
  * 期望 o0 == i0(18 位内的 BCD 整数在 80 位里精确; 取回又是精确整数存回)且
  * o1 == 0。符号由 kk&4 定(正 4 组 + 负 4 组, 实测f 两侧都量过)。入值全 < 1e18
  * —— FBLD 只有 18 位十进制量程, 19 位必被截(实测f 反例), 那不是缺陷是架构。 */
-uint64_t k_fbld_fistp_q_rt_tp(unsigned long long iters)
+uint64_t k_fbld_fistp_q_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = bput(BVEC[1], 0);
     void *d = fput(8, IB_POISON);
 
@@ -246,10 +246,10 @@ uint64_t k_fbld_fistp_q_rt_tp(unsigned long long iters)
  * o1 = 逐组相等位掩码(第 j 组结果 == 入值则置位), 期望 0xff。
  * 注: 本条的 i0/o0 与 kk **无关**(异或对固定八元组是常数) —— 这是刻意的: 它的
  * 看点是 o1 与 outf(注入标志必须原样穿过 8 组), 8 行之间只有 inf/outf 不同。 */
-uint64_t k_fild_fistp_q_x8_tp(unsigned long long iters)
+uint64_t k_fild_fistp_q_x8_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     int j;
     uint64_t x = 0;
 
@@ -276,10 +276,10 @@ uint64_t k_fild_fistp_q_x8_tp(unsigned long long iters)
  * 与 fcw_rt 的分工: 那条只证"16 位原样存得住"(不掺算术、不依赖位段含义), 本条证
  * "改档只动这两位"(依赖实测 g1 的位段 + g3 的可写位档)。P2 那四条的 fldcw 全靠
  * 这个前提才能把"签名不同"归因到舍入模式而不是"根本没写进去"。 */
-uint64_t k_rc_fstcw_rt_tp(unsigned long long iters)
+uint64_t k_rc_fstcw_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
 
     g_cw[0] = RC_CW(0);
     g_cw[1] = RC_CW(1);
@@ -293,10 +293,10 @@ uint64_t k_rc_fstcw_rt_tp(unsigned long long iters)
 
 
 /* ---------------- fld + fstp: 浮点载入/存回对(数据通路) ---------------- */
-uint64_t k_fld_fstp_tp(unsigned long long iters)
+uint64_t k_fld_fstp_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, qv("fld_fstp", 0, 0));
     void *d = (void *)&g_f[2];
 
@@ -306,10 +306,10 @@ uint64_t k_fld_fstp_tp(unsigned long long iters)
     return fget(2);
 }
 
-uint64_t k_fadd_tp(unsigned long long iters)
+uint64_t k_fadd_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *p = fput(0, qv("fadd", 0, 1));
     const void *p2 = fput(1, qv("fadd", 0, 2));
 
@@ -328,10 +328,10 @@ uint64_t k_fadd_tp(unsigned long long iters)
     return fget(2) ^ fget(3) ^ fget(4) ^ fget(5);
 }
 
-uint64_t k_fmul_tp(unsigned long long iters)
+uint64_t k_fmul_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *p = fput(0, qv("fmul", 0, 1));
     const void *p2 = fput(1, qv("fmul", 0, 2));
 
@@ -360,10 +360,10 @@ uint64_t k_fmul_tp(unsigned long long iters)
  *  一致, 所以"别拆成循环外种一次"的写法照旧保留 —— 它同时是 lat 无关的自平衡体。)
  * 入值口径: 与 P1 相反, 这里的被乘数是 n/4(小数只可能 .00/.25/.50/.75) ->
  * 期望是**就近取偶后的整数**, 抓的是软浮点舍入模式而不是位精度。 */
-uint64_t k_fistp_tp(unsigned long long iters)
+uint64_t k_fistp_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, qv("fistp", 0, 0));
     void *d = (void *)&g_f[2];
 
@@ -375,10 +375,10 @@ uint64_t k_fistp_tp(unsigned long long iters)
 
 
 /* ---------------- fcomip: 比较并把结果写成 EFLAGS ---------------- */
-uint64_t k_fcomip_tp(unsigned long long iters)
+uint64_t k_fcomip_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, qv("fcomip", 0, 0));
     const void *s2 = fput(1, qv("fcomip", 0, 1));
     void *d = (void *)&g_f[2];
@@ -402,10 +402,10 @@ uint64_t k_fcomip_tp(unsigned long long iters)
  *  所以"设档再算"是可推导的架构行为, 现由 P3 正式上表并给[解析]期望。)
  * 定时长内核的入值恒 0x037f(finit 同值): 保留位照文档写, 不赌硬件怎么刷 —— 保留位
  * 实测档见实测 g3(位 6 恒 1、位 7 与 13-15 恒 0), 取值内核因此只能用可写位段。 */
-uint64_t k_fcw_rt_tp(unsigned long long iters)
+uint64_t k_fcw_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     *(volatile uint16_t *)&g_cw[0] = 0x037fu;   /* finit 同值: 保留位照文档写, 不赌硬件怎么刷 */
     for (i = 0; i < iters; i++)
         __asm__ volatile("fldcw (%[s])\n\tfnstcw (%[d])"
@@ -441,10 +441,10 @@ uint64_t k_fcw_rt_tp(unsigned long long iters)
  *   stack_underflow_is 那一档, 本条**不造溢出**(连续溢出的 C1 交替未解释, 文件头 c))。
  * 期望 o1 == 0(弹 n 次之后 TOP 回 0, IE/SF/C1 全 0: 整数装载精确故无舍入方向)。
  * i0 = 压栈用的值, i1 = 压栈次数 n(审计端据此重算 TOP, 不抄表)。 */
-uint64_t k_stack_top_after_fild_tp(unsigned long long iters)
+uint64_t k_stack_top_after_fild_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     int j;
     const void *s = fput(0, XVEC[2]);
     void *d = fput(8, IB_POISON);
@@ -467,10 +467,10 @@ uint64_t k_stack_top_after_fild_tp(unsigned long long iters)
  *      o1 == 弹完 sw(低 16 位)| 峰值 sw(高 16 位)== 0x00000000。
  * 两个 sw 打包进一个字段而不是分两处: 它们本来就是同一次实测的两半("压满不溢出"
  * 与"弹空回原点"), 任一非 0 即本条 FAIL —— 拆成两条只会多占一个词干。 */
-uint64_t k_stack_fld8_st8_tp(unsigned long long iters)
+uint64_t k_stack_fld8_st8_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     int j;
     uint64_t x = 0;
 
@@ -501,10 +501,10 @@ uint64_t k_stack_fld8_st8_tp(unsigned long long iters)
  * —— 两半合起来就是"互换", 而且是纯置换、不含任何舍入模型。
  * TOP 不变不在字段里, 但它是这个等式成立的前提: TOP 一旦被改动, 整个弹栈阶梯整体
  * 平移, o0/o1 同时错(stack_top_after_fild 与 fincstp_fdecstp_rt 另外直接钉 TOP)。 */
-uint64_t k_fxch_st3_tp(unsigned long long iters)
+uint64_t k_fxch_st3_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     int j;
     uint64_t x = 0;
 
@@ -536,10 +536,10 @@ uint64_t k_fxch_st3_tp(unsigned long long iters)
  *   弹完 sw 期望 0(三格弹完 TOP 回 0、无 IE|SF)。
  * "TOP 退了一格"是通过值序钉住的: 若 FLD 没压栈, 第一格弹回来的是 B 而不是 A,
  * o0 当场错 —— 不需要第三个字段(与 fxch_st3 同一处置)。 */
-uint64_t k_fldst_st1_to_st0_tp(unsigned long long iters)
+uint64_t k_fldst_st1_to_st0_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *a = fput(0, XVEC[2]);
     const void *b = fput(1, XVEC[3]);
 
@@ -559,10 +559,10 @@ uint64_t k_fldst_st1_to_st0_tp(unsigned long long iters)
  * 期望 o0 == (n&7)<<11(n=kk+1 次 fincstp), o1 == 0(再 n 次 fdecstp 回到起点)。
  * 方向与压栈相反: finit 后 TOP=0, 压栈是 -1、fincstp 是 +1 —— 两条都在本节上表,
  *   拿同一条走位规则混过去就会正好错一档。 */
-uint64_t k_fincstp_fdecstp_rt_tp(unsigned long long iters)
+uint64_t k_fincstp_fdecstp_rt_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     int j;
 
     for (i = 0; i < iters; i++) {
@@ -593,10 +593,10 @@ uint64_t k_fincstp_fdecstp_rt_tp(unsigned long long iters)
  * 本条**不把栈弹空**就返回(8 格留在上面): 弹一个被 ffree 掉的格子会碰上
  *   "向无效格存回"这个未实测形状, 而那不属于本条要钉的事; 隔离靠下一内核入口的
  *   X87_BEGIN()(文件头"内核纪律"第一条就是不指望进出平衡)。 */
-uint64_t k_ffree_tag_tp(unsigned long long iters)
+uint64_t k_ffree_tag_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     int j;
     const void *s = fput(0, XVEC[2]);
 
@@ -631,10 +631,10 @@ uint64_t k_ffree_tag_tp(unsigned long long iters)
  *   kk>=4: c000….    / 0xffff              / sw=0x3801
  * TOP=7 是因为序列取 fldl+fdivl(不弹栈), 与 G5 的读数同形 —— 用 fdivp 就变成 TOP=7
  * 但少一项, 两者不可混读(这就是文件头说的"省掉操作数次序的名字就是下一个错读")。 */
-uint64_t k_fdiv_zero_ze_tp(unsigned long long iters)
+uint64_t k_fdiv_zero_ze_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *a = fput(0, D_ONE);
     const void *b = fput(1, 0);
 
@@ -646,10 +646,10 @@ uint64_t k_fdiv_zero_ze_tp(unsigned long long iters)
 
 /* fsqrt_neg_ie 的定时长体与 kat 共用同一张入值表(取 SQRTA[0]): 本条要量的是
  * fsqrt 自己, 序列形与取值体一致 —— 否则定时长数字与判据不同形(其余各条同此)。 */
-uint64_t k_fsqrt_neg_ie_tp(unsigned long long iters)
+uint64_t k_fsqrt_neg_ie_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *a = fput(0, SQRTA[0]);
 
     for (i = 0; i < iters; i++)
@@ -671,10 +671,10 @@ uint64_t k_fsqrt_neg_ie_tp(unsigned long long iters)
  *   这两档的 o0 **字面相同时**, 只靠 sw 分开 —— 那正是本节最有信息量的一行:
  *     "整数最小值"既是合法结果又是错值填充, 拿写回值当唯一判据会把越界读成正常。
  * 序列的 sw 取在 fistp 之后(见本节头三个例外的说明)。 */
-uint64_t k_fistp_oe_tp(unsigned long long iters)
+uint64_t k_fistp_oe_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     void *d = fput(8, IB_POISON);
 
     for (i = 0; i < iters; i++) {
@@ -685,10 +685,10 @@ uint64_t k_fistp_oe_tp(unsigned long long iters)
     return fget(8);
 }
 
-uint64_t k_stack_underflow_is_tp(unsigned long long iters)
+uint64_t k_stack_underflow_is_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
 
     /* finit 必须在循环里: 本条量的是"空栈弹一次", 不弹回去第二圈就不是空栈了 */
     for (i = 0; i < iters; i++)
@@ -698,20 +698,20 @@ uint64_t k_stack_underflow_is_tp(unsigned long long iters)
 }
 
 
-uint64_t k_denormal_ue_tp(unsigned long long iters)
+uint64_t k_denormal_ue_tp(ib_uw iters)
 {
     return x87_bin80_tp(iters, XBDEN);
 }
 
-uint64_t k_precision_pe_tp(unsigned long long iters)
+uint64_t k_precision_pe_tp(ib_uw iters)
 {
     return x87_bin80_tp(iters, XBPRC);
 }
 
-uint64_t k_fnclex_clears_tp(unsigned long long iters)
+uint64_t k_fnclex_clears_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *a = fput(0, D_ONE), *b = fput(1, 0);
 
     for (i = 0; i < iters; i++)
@@ -721,10 +721,10 @@ uint64_t k_fnclex_clears_tp(unsigned long long iters)
 }
 
 
-uint64_t k_fcom_cc_tp(unsigned long long iters)
+uint64_t k_fcom_cc_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *pa = fput(0, FCOP[0][0]);
     const void *pb = fput(1, FCOP[0][1]);
 
@@ -735,10 +735,10 @@ uint64_t k_fcom_cc_tp(unsigned long long iters)
 }
 
 
-uint64_t k_fcompp_cc_tp(unsigned long long iters)
+uint64_t k_fcompp_cc_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *pa = fput(0, FCPP[0][0]);
     const void *pb = fput(1, FCPP[0][1]);
 
@@ -749,10 +749,10 @@ uint64_t k_fcompp_cc_tp(unsigned long long iters)
 }
 
 
-uint64_t k_fsubr_pair_tp(unsigned long long iters)
+uint64_t k_fsubr_pair_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *pa = fput(0, FSUBAB[0][0]);
     const void *pb = fput(1, FSUBAB[0][1]);
 
@@ -763,10 +763,10 @@ uint64_t k_fsubr_pair_tp(unsigned long long iters)
 }
 
 
-uint64_t k_fisubr_m64_tp(unsigned long long iters)
+uint64_t k_fisubr_m64_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *pa = fput(0, FIA[1]);
     const void *pc = fput(2, FIC[4]);
 
@@ -777,10 +777,10 @@ uint64_t k_fisubr_m64_tp(unsigned long long iters)
 }
 
 
-uint64_t k_fscale_int_tp(unsigned long long iters)
+uint64_t k_fscale_int_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *pn = fput(0, FSN[0]);
     const void *pa = fput(1, FSA[0]);
 
@@ -791,10 +791,10 @@ uint64_t k_fscale_int_tp(unsigned long long iters)
 }
 
 
-uint64_t k_fxam_kinds_tp(unsigned long long iters)
+uint64_t k_fxam_kinds_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *pv = fput(0, FXAV[5]);
 
     for (i = 0; i < iters; i++)
@@ -819,10 +819,10 @@ uint64_t k_fxam_kinds_tp(unsigned long long iters)
  *   不置 ES, 而 B 需要 unmasked 挂起异常 —— 同一实测里 unmasked 会在**下一条** x87 指令
  *   处交付 #MF、进程直接带走, 所以这两位的"三读法一致"无法在内核里证, 写在
  *   这里而不是悄悄少测(与 a)/c) 那两处同一处置)。 */
-uint64_t k_fstsw_allbits_tp(unsigned long long iters)
+uint64_t k_fstsw_allbits_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     uint16_t ax1 = 0, ax2 = 0;      /* 必须起零: iters=0 时循环不转, 不初始化就是读垃圾
                                      * (-Wall 的 maybe-uninitialized 就是抬这一条) */
 
@@ -852,10 +852,10 @@ uint64_t k_fstsw_allbits_tp(unsigned long long iters)
  *   翻译器若只刷 TOP 不刷 tag, 它的 tag_after 就不是 0xffff -> 本条能抓到。
  * C 侧锚点 = x87 位序校验探针 的 G0(入口 sw=0000/cw=037f) 与 G3(脏态归零后 cw 回入口、
  *   sw 归零) 两行; tag 与 TOP 的归零只有本条的 fninit+fnstenv 能证, 见节头 ③。 */
-uint64_t k_fninit_defaults_tp(unsigned long long iters)
+uint64_t k_fninit_defaults_tp(ib_uw iters)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++) {
         x87_dirty(3);
@@ -894,10 +894,10 @@ uint64_t k_fninit_defaults_tp(unsigned long long iters)
 
 /* sn: 指令前缀(fsin...); i: g_opinfo 下标; ASM: 整段 P8_BODY_* 拼好的字面量 */
 #define P8_TPS(sn, i, ASM)                                                  \
-    uint64_t k_##sn##_f64_tp(unsigned long long iters)                       \
+    uint64_t k_##sn##_f64_tp(ib_uw iters)                       \
     {                                                                       \
         X87_BEGIN();                                                        \
-        unsigned long long j;                                               \
+        ib_uw j;                                               \
         const void *s1 = tput80(0, g_opinfo[i].smant, g_opinfo[i].sse);     \
         const void *s0 = tput80(1, MANT_F64, M80_E(g_opinfo[i].ise));       \
         void *rt = &g_t[2];                                                 \
@@ -907,10 +907,10 @@ uint64_t k_fninit_defaults_tp(unsigned long long iters)
                              : : [s1] "r"(s1), [s0] "r"(s0), [r] "r"(rt), [d] "r"(&g_t[4]) : "memory"); \
         return tget_m(2) ^ (uint64_t)tget_s(2);                             \
     }                                                                       \
-    uint64_t k_##sn##_f80_tp(unsigned long long iters)                       \
+    uint64_t k_##sn##_f80_tp(ib_uw iters)                       \
     {                                                                       \
         X87_BEGIN();                                                        \
-        unsigned long long j;                                               \
+        ib_uw j;                                               \
         const void *s1 = tput80(0, g_opinfo[i].smant, g_opinfo[i].sse);     \
         const void *s0 = tput80(1, MANT_F80, M80_E(g_opinfo[i].ise));       \
         void *rt = &g_t[2];                                                 \

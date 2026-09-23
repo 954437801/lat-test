@@ -29,6 +29,15 @@ typedef jmp_buf ib_jmp_t;
 typedef sigjmp_buf ib_jmp_t;
 #endif
 
+/* 用例内核的迭代计数与本机字长:
+ *   内核形参(ib_fn)与循环计数器统一取"本机字长" —— i386=32 / x64、loongarch64=64。
+ *   若取 64 位, i386 上每轮要多一条 `add $1,%eax; adc $0,%edx`(进位对), 在旗标写昂贵
+ *   的 i386 路径上会把整轮延迟钉在脚手架地板(实测 3.91ns)上, 被测指令的真实延迟
+ *   被淹没(见 src/cint 的实测与报告 §17)。测量/累加算术(ops/total_iters/it_max
+ *   等)仍留 64 位。 */
+typedef uintptr_t ib_uw;
+#define IB_UW_MAX ((unsigned long long)(ib_uw)-1)
+
 /* ==================== 运行参数 ==================== */
 extern int g_tput_ms;
 extern unsigned long long g_lat_iters;
@@ -539,7 +548,7 @@ typedef struct {
 typedef void (*ib_kat_fn)(int k, ib_kv *got);
 
 /* ==================== 用例表(必须在 ib_kline 之前定义) ==================== */
-typedef uint64_t (*ib_fn)(unsigned long long iters);
+typedef uint64_t (*ib_fn)(ib_uw iters);
 typedef struct {
     const char *name;
     const char *cap;
@@ -623,18 +632,20 @@ static int ib_case_lat(const char *grp, const ib_case *c)
 
         /* 自适应: 单轮太快(<1us)就加内层次数, 上限 it_max */
         t0 = ib_now();
-        s = c->lat(it);
+        s = c->lat((ib_uw)it);
         el = ib_now() - t0;
         if (el < 1000) {                        /* 单轮 < 1us: 放大到目标 ~10us */
             it = it * 10000ULL / (el ? el : 1);
             if (it > it_max)
                 it = it_max;
         }
+        if (it > IB_UW_MAX)                     /* 内核形参是本机字长(i386=32 位) */
+            it = IB_UW_MAX;                     /* 防 --iters 超 2^32 静默截断 */
         
         /* 外层循环: 跑 outer_loops 次取平均 */
         t0 = ib_now();
         for (int i = 0; i < outer_loops; i++) {
-            s = c->lat(it);
+            s = c->lat((ib_uw)it);
             total_iters += it;
         }
         IB_BARRIER();

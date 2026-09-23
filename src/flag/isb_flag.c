@@ -52,9 +52,9 @@
  * 按默认宽度汇编 -> cmpb 被当 cmpl 测, 且多读的字节是栈上/区外未初始化内容
  * -> 标志不确定 -> 签名不可复现(实测)。 */
 /* ---- cmp_r_r_q: IB_K_FLGK ---- */
-static uint64_t k_cmp_r_r_q(unsigned long long it)                                     
+static uint64_t k_cmp_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -65,9 +65,9 @@ static uint64_t k_cmp_r_r_q(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -105,9 +105,9 @@ static uint64_t k_cmp_r_r_q_tp(unsigned long long it)
 }
 
 /* ---- cmp_r_i_q: IB_K_FLGK ---- */
-static uint64_t k_cmp_r_i_q(unsigned long long it)                                     
+static uint64_t k_cmp_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -118,9 +118,9 @@ static uint64_t k_cmp_r_i_q(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -158,9 +158,9 @@ static uint64_t k_cmp_r_i_q_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_r_q_base: IB_K_FLGK ---- */
-static uint64_t k_cmp_m_r_q_base(unsigned long long it)                                     
+static uint64_t k_cmp_m_r_q_base(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -171,9 +171,9 @@ static uint64_t k_cmp_m_r_q_base(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_m_r_q_base_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_r_q_base_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -211,9 +211,9 @@ static uint64_t k_cmp_m_r_q_base_tp(unsigned long long it)
 }
 
 /* ---- cmp_r_m_q_base: IB_K_FLGK ---- */
-static uint64_t k_cmp_r_m_q_base(unsigned long long it)                                     
+static uint64_t k_cmp_r_m_q_base(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -224,9 +224,9 @@ static uint64_t k_cmp_r_m_q_base(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_r_m_q_base_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_m_q_base_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -264,9 +264,9 @@ static uint64_t k_cmp_r_m_q_base_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_i_q_base: IB_K_FLGMK ---- */
-static uint64_t k_cmp_m_i_q_base(unsigned long long it)                                     
+static uint64_t k_cmp_m_i_q_base(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0);                                                        
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -277,9 +277,9 @@ static uint64_t k_cmp_m_i_q_base(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_m_i_q_base_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_i_q_base_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -310,9 +310,9 @@ static uint64_t k_cmp_m_i_q_base_tp(unsigned long long it)
 }
 
 /* ---- test_r_r_q: IB_K_FLGK ---- */
-static uint64_t k_test_r_r_q(unsigned long long it)                                     
+static uint64_t k_test_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -323,9 +323,9 @@ static uint64_t k_test_r_r_q(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_test_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_test_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6), b = (IB_UQ)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -366,9 +366,9 @@ static uint64_t k_test_r_r_q_tp(unsigned long long it)
 
 /* ---------------- 两 ABI 共有形态 ---------------- */
 /* ---- cmp_r_i_l: IB_K_FLGK ---- */
-static uint64_t k_cmp_r_i_l(unsigned long long it)                                     
+static uint64_t k_cmp_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -379,9 +379,9 @@ static uint64_t k_cmp_r_i_l(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -419,9 +419,9 @@ static uint64_t k_cmp_r_i_l_tp(unsigned long long it)
 }
 
 /* ---- cmp_r_r_l: IB_K_FLGK ---- */
-static uint64_t k_cmp_r_r_l(unsigned long long it)                                     
+static uint64_t k_cmp_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -432,9 +432,9 @@ static uint64_t k_cmp_r_r_l(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -472,9 +472,9 @@ static uint64_t k_cmp_r_r_l_tp(unsigned long long it)
 }
 
 /* ---- cmp_r_m_l_base: IB_K_FLGK ---- */
-static uint64_t k_cmp_r_m_l_base(unsigned long long it)                                     
+static uint64_t k_cmp_r_m_l_base(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -485,9 +485,9 @@ static uint64_t k_cmp_r_m_l_base(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_r_m_l_base_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_m_l_base_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -525,9 +525,9 @@ static uint64_t k_cmp_r_m_l_base_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_r_l_index: IB_K_FLGK ---- */
-static uint64_t k_cmp_m_r_l_index(unsigned long long it)                                     
+static uint64_t k_cmp_m_r_l_index(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -538,9 +538,9 @@ static uint64_t k_cmp_m_r_l_index(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_m_r_l_index_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_r_l_index_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -578,9 +578,9 @@ static uint64_t k_cmp_m_r_l_index_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_i_l_base: IB_K_FLGMK ---- */
-static uint64_t k_cmp_m_i_l_base(unsigned long long it)                                     
+static uint64_t k_cmp_m_i_l_base(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0);                                                        
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -591,9 +591,9 @@ static uint64_t k_cmp_m_i_l_base(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_m_i_l_base_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_i_l_base_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -624,9 +624,9 @@ static uint64_t k_cmp_m_i_l_base_tp(unsigned long long it)
 }
 
 /* ---- cmp_r_i_b: IB_K_FLG8K ---- */
-static uint64_t k_cmp_r_i_b(unsigned long long it)                                     
+static uint64_t k_cmp_r_i_b(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), b = (IB_UB)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -638,7 +638,7 @@ static uint64_t k_cmp_r_i_b(unsigned long long it)
     }                                                                             
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_cmp_r_i_b_tp(unsigned long long it)                                
+static uint64_t k_cmp_r_i_b_tp(ib_uw it)                                
 {                                                                                 
     return k_cmp_r_i_b(it);                                                            
 }       
@@ -659,9 +659,9 @@ static uint64_t k_cmp_r_i_b_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_r_b_index: IB_K_FLG8K ---- */
-static uint64_t k_cmp_m_r_b_index(unsigned long long it)                                     
+static uint64_t k_cmp_m_r_b_index(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), b = (IB_UB)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -673,7 +673,7 @@ static uint64_t k_cmp_m_r_b_index(unsigned long long it)
     }                                                                             
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_cmp_m_r_b_index_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_r_b_index_tp(ib_uw it)                                
 {                                                                                 
     return k_cmp_m_r_b_index(it);                                                            
 }       
@@ -694,9 +694,9 @@ static uint64_t k_cmp_m_r_b_index_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_i_b_base: IB_K_FLGMK ---- */
-static uint64_t k_cmp_m_i_b_base(unsigned long long it)                                     
+static uint64_t k_cmp_m_i_b_base(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0);                                                        
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -707,9 +707,9 @@ static uint64_t k_cmp_m_i_b_base(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_cmp_m_i_b_base_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_i_b_base_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), c = (IB_UB)IB_SEED(2);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -740,9 +740,9 @@ static uint64_t k_cmp_m_i_b_base_tp(unsigned long long it)
 }
 
 /* ---- cmp_m_i_b_base_sp: IB_K_FLG8PK ---- */
-static uint64_t k_cmp_m_i_b_base_sp(unsigned long long it)                                     
+static uint64_t k_cmp_m_i_b_base_sp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0);                                                        
     __asm__ volatile("mov" "b" " $0x3c," IB_M_SP ::: "memory");                        
     for (i = 0; i < it; i++)                                                      
@@ -751,7 +751,7 @@ static uint64_t k_cmp_m_i_b_base_sp(unsigned long long it)
                 : [a] "+a"(a) : : "cc", "memory");                                
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_cmp_m_i_b_base_sp_tp(unsigned long long it)                                
+static uint64_t k_cmp_m_i_b_base_sp_tp(ib_uw it)                                
 {                                                                                 
     return k_cmp_m_i_b_base_sp(it);                                                            
 }  
@@ -770,9 +770,9 @@ static uint64_t k_cmp_m_i_b_base_sp_tp(unsigned long long it)
 }
 
 /* ---- test_r_r_l: IB_K_FLGK ---- */
-static uint64_t k_test_r_r_l(unsigned long long it)                                     
+static uint64_t k_test_r_r_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -783,9 +783,9 @@ static uint64_t k_test_r_r_l(unsigned long long it)
     }                                                                             
     return (uint64_t)a;                                                           
 }                                                                                 
-static uint64_t k_test_r_r_l_tp(unsigned long long it)                                
+static uint64_t k_test_r_r_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6), b = (IB_UL)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
@@ -823,9 +823,9 @@ static uint64_t k_test_r_r_l_tp(unsigned long long it)
 }
 
 /* ---- test_r_i_b: IB_K_FLG8K ---- */
-static uint64_t k_test_r_i_b(unsigned long long it)                                     
+static uint64_t k_test_r_i_b(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), b = (IB_UB)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -837,7 +837,7 @@ static uint64_t k_test_r_i_b(unsigned long long it)
     }                                                                             
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_test_r_i_b_tp(unsigned long long it)                                
+static uint64_t k_test_r_i_b_tp(ib_uw it)                                
 {                                                                                 
     return k_test_r_i_b(it);                                                            
 }       
@@ -858,9 +858,9 @@ static uint64_t k_test_r_i_b_tp(unsigned long long it)
 }
 
 /* ---- test_r_r_b: IB_K_FLG8K ---- */
-static uint64_t k_test_r_r_b(unsigned long long it)                                     
+static uint64_t k_test_r_r_b(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), b = (IB_UB)IB_SEED(1);                                    
     for (i = 0; i < it; i++) {                                                    
         IB_PROT_P(i);                                                             
@@ -872,7 +872,7 @@ static uint64_t k_test_r_r_b(unsigned long long it)
     }                                                                             
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_test_r_r_b_tp(unsigned long long it)                                
+static uint64_t k_test_r_r_b_tp(ib_uw it)                                
 {                                                                                 
     return k_test_r_r_b(it);                                                            
 }       

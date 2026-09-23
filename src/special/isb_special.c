@@ -76,9 +76,9 @@ __attribute__((noinline)) static AW *kbuf(AW m)
  *    器折叠(反汇编核对过循环体只有一条 xadd), 不要为了“看着像个数”去改链形。
  * ===================================================================== */
 /* ---------------- xchg 寄存器形 ---------------- */
-static uint64_t k_xchg_r(unsigned long long iters)
+static uint64_t k_xchg_r(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, b = (AW)0x9e3779b9u;
 
     for (i = 0; i < iters; i++)
@@ -86,9 +86,9 @@ static uint64_t k_xchg_r(unsigned long long iters)
                 : [a] "+a"(a), [b] "+b"(b) : : "cc");
     return (uint64_t)a ^ ((uint64_t)b << 16);
 }
-static uint64_t k_xchg_r_tp(unsigned long long iters)
+static uint64_t k_xchg_r_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, b = (AW)0x9e3779b9u;
     AW c = (AW)0x243f6a88u, d = (AW)0x13198a2eu;
 
@@ -117,9 +117,9 @@ static void k_xchg_r_kat(int kk, ib_kv *g)
 }
 
 /* ---------------- xchg 内存形(隐式带锁) ---------------- */
-static uint64_t k_xchg_m(unsigned long long iters)
+static uint64_t k_xchg_m(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, x;
     AW *p = &g_mem[1];
 
@@ -130,9 +130,9 @@ static uint64_t k_xchg_m(unsigned long long iters)
     __asm__ volatile("mov" A32 " (%[p]),%[x]" : [x] "=r"(x) : [p] "r"(p) : "memory");
     return (uint64_t)a ^ ((uint64_t)x << 16);
 }
-static uint64_t k_xchg_m_tp(unsigned long long iters)
+static uint64_t k_xchg_m_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, x;
     AW *p = &g_mem[1];
 
@@ -168,9 +168,9 @@ static void k_xchg_m_kat(int kk, ib_kv *g)
 }
 
 /* ---------------- cmpxchg ---------------- */
-static uint64_t k_cmpxchg(unsigned long long iters)
+static uint64_t k_cmpxchg(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, s, x;
     AW *p = &g_mem[1];
 
@@ -183,9 +183,9 @@ static uint64_t k_cmpxchg(unsigned long long iters)
     __asm__ volatile("mov" A32 " (%[p]),%[x]" : [x] "=r"(x) : [p] "r"(p) : "memory");
     return (uint64_t)a ^ ((uint64_t)x << 16);
 }
-static uint64_t k_cmpxchg_tp(unsigned long long iters)
+static uint64_t k_cmpxchg_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, s, x;
     AW *p = &g_mem[1];
 
@@ -230,9 +230,9 @@ static void k_cmpxchg_kat(int kk, ib_kv *g)
 }
 
 /* ---------------- lock cmpxchg(与上一形同真值, 差的只是原子序与代价) -------- */
-static uint64_t k_lock_cmpxchg(unsigned long long iters)
+static uint64_t k_lock_cmpxchg(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, s, x;
     AW *p = &g_mem[1];
 
@@ -244,9 +244,9 @@ static uint64_t k_lock_cmpxchg(unsigned long long iters)
     __asm__ volatile("mov" A32 " (%[p]),%[x]" : [x] "=r"(x) : [p] "r"(p) : "memory");
     return (uint64_t)a ^ ((uint64_t)x << 16);
 }
-static uint64_t k_lock_cmpxchg_tp(unsigned long long iters)
+static uint64_t k_lock_cmpxchg_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x11223344u, s, x;
     AW *p = &g_mem[1];
 
@@ -283,9 +283,9 @@ static void k_lock_cmpxchg_kat(int kk, ib_kv *g)
 }
 
 /* ---------------- xadd 与 lock xadd(零骨架: acc 与内存互为递推) -------------- */
-static uint64_t k_xadd(unsigned long long iters)
+static uint64_t k_xadd(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x9e3779b9u, x;
     AW *p = &g_mem[1];
 
@@ -296,9 +296,9 @@ static uint64_t k_xadd(unsigned long long iters)
     __asm__ volatile("mov" A32 " (%[p]),%[x]" : [x] "=r"(x) : [p] "r"(p) : "memory");
     return (uint64_t)a ^ ((uint64_t)x << 16);
 }
-static uint64_t k_xadd_tp(unsigned long long iters)
+static uint64_t k_xadd_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x9e3779b9u, c = (AW)0x243f6a88u, x;
     AW *p = &g_mem[1], *q = &g_mem[3];
 
@@ -334,9 +334,9 @@ static void k_xadd_kat(int kk, ib_kv *g)
     g->o0 = a;    g->o1 = x;                /* 期望: o0==i1 且 o1==(i0+i1) */
     g->outf = (uint64_t)fl & IB_FLG_MASK;
 }
-static uint64_t k_lock_xadd(unsigned long long iters)
+static uint64_t k_lock_xadd(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x9e3779b9u, x;
     AW *p = &g_mem[1];
 
@@ -347,9 +347,9 @@ static uint64_t k_lock_xadd(unsigned long long iters)
     __asm__ volatile("mov" A32 " (%[p]),%[x]" : [x] "=r"(x) : [p] "r"(p) : "memory");
     return (uint64_t)a ^ ((uint64_t)x << 16);
 }
-static uint64_t k_lock_xadd_tp(unsigned long long iters)
+static uint64_t k_lock_xadd_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     AW a = (AW)0x9e3779b9u, x;
     AW *p = &g_mem[1];
 
@@ -384,42 +384,42 @@ static void k_lock_xadd_kat(int kk, ib_kv *g)
  *    预取每轮把地址在 64B 缓冲里按 8B 滑窗(而不是反复预取同一条已热行) ——
  *    后者测的是「prefetch 当空操作」的代价, 与真码里的滑窗预取不是一件事。
  * ===================================================================== */
-static uint64_t k_mfence_tp(unsigned long long iters)
+static uint64_t k_mfence_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++)
         __asm__ volatile("mfence" ::: "memory");
     return 0;
 }
-static uint64_t k_lfence_tp(unsigned long long iters)
+static uint64_t k_lfence_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++)
         __asm__ volatile("lfence" ::: "memory");
     return 0;
 }
-static uint64_t k_sfence_tp(unsigned long long iters)
+static uint64_t k_sfence_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++)
         __asm__ volatile("sfence" ::: "memory");
     return 0;
 }
-static uint64_t k_pause_tp(unsigned long long iters)
+static uint64_t k_pause_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++)
         __asm__ volatile("pause" ::: "memory");
     return 0;
 }
 
-static uint64_t k_prefetcht0_tp(unsigned long long iters)
+static uint64_t k_prefetcht0_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW o = (TW)0;
     const void *b = (const void *)g_src;
 
@@ -429,9 +429,9 @@ static uint64_t k_prefetcht0_tp(unsigned long long iters)
                          : [o] "+r"(o) : [b] "r"(b) : "memory");
     return (uint64_t)o;
 }
-static uint64_t k_prefetcht1_tp(unsigned long long iters)
+static uint64_t k_prefetcht1_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW o = (TW)0;
     const void *b = (const void *)g_src;
 
@@ -441,9 +441,9 @@ static uint64_t k_prefetcht1_tp(unsigned long long iters)
                          : [o] "+r"(o) : [b] "r"(b) : "memory");
     return (uint64_t)o;
 }
-static uint64_t k_prefetcht2_tp(unsigned long long iters)
+static uint64_t k_prefetcht2_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW o = (TW)0;
     const void *b = (const void *)g_src;
 
@@ -453,9 +453,9 @@ static uint64_t k_prefetcht2_tp(unsigned long long iters)
                          : [o] "+r"(o) : [b] "r"(b) : "memory");
     return (uint64_t)o;
 }
-static uint64_t k_prefetchnta_tp(unsigned long long iters)
+static uint64_t k_prefetchnta_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW o = (TW)0;
     const void *b = (const void *)g_src;
 
@@ -473,9 +473,9 @@ static uint64_t k_prefetchnta_tp(unsigned long long iters)
  *    只收单内存操作数; 而 `nopl (%rax)` 生成 0f 1f 00 —— ModRM.reg = 000(正是那
  *    个假目的 %eax), 与反汇编到的多字节 NOP 同族。
  * ===================================================================== */
-static uint64_t k_nop(unsigned long long iters)
+static uint64_t k_nop(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW a = (TW)0x11223344u, b = (TW)0x9e3779b9u;
 
     for (i = 0; i < iters; i++)
@@ -483,9 +483,9 @@ static uint64_t k_nop(unsigned long long iters)
                 : [a] "+a"(a) : [b] "r"(b) : "cc", "memory");
     return (uint64_t)a;
 }
-static uint64_t k_nop_tp(unsigned long long iters)
+static uint64_t k_nop_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW a = (TW)0x11223344u, c = (TW)0x243f6a88u, b = (TW)0x9e3779b9u;
 
     for (i = 0; i < iters; i++) {
@@ -496,9 +496,9 @@ static uint64_t k_nop_tp(unsigned long long iters)
     }
     return (uint64_t)a ^ ((uint64_t)c << 16);
 }
-static uint64_t k_nopl_m(unsigned long long iters)
+static uint64_t k_nopl_m(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW a = (TW)0x11223344u, b = (TW)0x9e3779b9u;
     const void *p = (const void *)&g_mem[1];
 
@@ -507,9 +507,9 @@ static uint64_t k_nopl_m(unsigned long long iters)
                 : [a] "+a"(a) : [b] "r"(b), [p] "r"(p) : "cc", "memory");
     return (uint64_t)a;
 }
-static uint64_t k_nopl_m_tp(unsigned long long iters)
+static uint64_t k_nopl_m_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     TW a = (TW)0x11223344u, c = (TW)0x243f6a88u, b = (TW)0x9e3779b9u;
     const void *p = (const void *)&g_mem[1];
 
@@ -531,9 +531,9 @@ static uint64_t k_nopl_m_tp(unsigned long long iters)
  *    上表字段语义(审计端按同一规则反算): i0 = 源侧 8 字节, i1 = 目的侧 8 字节
  *    (执行前), o0 = 目的侧 8 字节(执行后), o1 = 指针推进量(=1)。
  * ===================================================================== */
-static uint64_t k_movsb(unsigned long long iters)
+static uint64_t k_movsb(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++) {
         const void *s = (const void *)&g_src[0];
@@ -542,9 +542,9 @@ static uint64_t k_movsb(unsigned long long iters)
     }
     return g_dst[0] & 0xffu;
 }
-static uint64_t k_movsb_tp(unsigned long long iters)
+static uint64_t k_movsb_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     const void *s;
     void *d;
 
@@ -578,9 +578,9 @@ static void k_movsb_kat(int kk, ib_kv *g)
     g->outf = (uint64_t)fl & IB_FLG_MASK;   /* mov 类不改标志 -> outf == inf */
 }
 
-static uint64_t k_stosb(unsigned long long iters)
+static uint64_t k_stosb(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     unsigned char v = (unsigned char)0x5au;
 
     for (i = 0; i < iters; i++) {
@@ -589,9 +589,9 @@ static uint64_t k_stosb(unsigned long long iters)
     }
     return g_dst[0] & 0xffu;
 }
-static uint64_t k_stosb_tp(unsigned long long iters)
+static uint64_t k_stosb_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     unsigned char v = (unsigned char)0x5au;
     void *d;
 
@@ -623,9 +623,9 @@ static void k_stosb_kat(int kk, ib_kv *g)
     g->outf = (uint64_t)fl & IB_FLG_MASK;
 }
 
-static uint64_t k_cmpsb(unsigned long long iters)
+static uint64_t k_cmpsb(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     uintptr_t fl = 0;
 
     for (i = 0; i < iters; i++) {
@@ -636,9 +636,9 @@ static uint64_t k_cmpsb(unsigned long long iters)
     }
     return (uint64_t)fl & IB_FLG_MASK;
 }
-static uint64_t k_cmpsb_tp(unsigned long long iters)
+static uint64_t k_cmpsb_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     uintptr_t fl = 0;
 
     for (i = 0; i < iters; i++) {
@@ -680,9 +680,9 @@ static void k_cmpsb_kat(int kk, ib_kv *g)
  * 这一对才是 LATX 里真正的 REP 宏展开路径(单次 exec 要跑完 8 个字节), 也是
  * 整组里单条代价最高的两条 -> lat 含 3 条骨架 mov(重置 rsi/rdi/rcx)。
  * tput 用四个互不相干的内存槽(同一条 rep 挨个跑同一槽会串行)。 ------------- */
-static uint64_t k_rep_movsb(unsigned long long iters)
+static uint64_t k_rep_movsb(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++) {
         const void *s = (const void *)&g_src[0];
@@ -692,9 +692,9 @@ static uint64_t k_rep_movsb(unsigned long long iters)
     }
     return g_dst[0];
 }
-static uint64_t k_rep_movsb_tp(unsigned long long iters)
+static uint64_t k_rep_movsb_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 
     for (i = 0; i < iters; i++) {
         const void *s = (const void *)&g_src[0];
@@ -733,9 +733,9 @@ static void k_rep_movsb_kat(int kk, ib_kv *g)
     g->outf = (uint64_t)fl & IB_FLG_MASK;
 }
 
-static uint64_t k_rep_stosb(unsigned long long iters)
+static uint64_t k_rep_stosb(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     unsigned char v = (unsigned char)0x5au;
 
     for (i = 0; i < iters; i++) {
@@ -745,9 +745,9 @@ static uint64_t k_rep_stosb(unsigned long long iters)
     }
     return g_dst[0];
 }
-static uint64_t k_rep_stosb_tp(unsigned long long iters)
+static uint64_t k_rep_stosb_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
     unsigned char v = (unsigned char)0x5au;
 
     for (i = 0; i < iters; i++) {

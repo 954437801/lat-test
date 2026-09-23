@@ -16,13 +16,13 @@ static const char *g_caps[] = {
  * 注: leaf1 EBX[31:24] = 初始 APIC ID, 多核/构建机2 下进程落不同 vCPU 即变
  * (实测同机连跑 sig 每次不同) -> 屏蔽该段, 否则 cpuid lat 签名不可复现;
  * 特性位全部保留, 跨机(真机 vs wine/LATX)差异仍会如实反映到签名。 */
-static uint64_t k_cpuid_lat(unsigned long long iters)
+static uint64_t k_cpuid_lat(ib_uw iters)
 {
     static const unsigned leafs[4] = { 0, 1, 7, 0x80000001u };
     unsigned a = 0, b = 0, c = 0, d = 0;
     uint64_t acc = 0;
     int li = 0;
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) {
         unsigned lf = leafs[li++ & 3];
         ib_cpuid(lf, 0, &a, &b, &c, &d);

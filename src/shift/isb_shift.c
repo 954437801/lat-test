@@ -58,18 +58,18 @@
 /* ---------------- 64 位形态(仅 x86_64) ---------------- */
 #ifdef __x86_64__
 /* ---- shl_r_i_q: IB_K_SHI ---- */
-static uint64_t k_shl_r_i_q(unsigned long long it)                                     
+static uint64_t k_shl_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("shlq" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shl_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_shl_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -103,9 +103,9 @@ static inline void k_shl_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- shl_r_r_q: IB_K_SHC ---- */
-static uint64_t k_shl_r_r_q(unsigned long long it)                                     
+static uint64_t k_shl_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     uint8_t n = 3;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -113,9 +113,9 @@ static uint64_t k_shl_r_r_q(unsigned long long it)
                 : [a] "+r"(a), [v] "+r"(v) : "c"(n) : "cc");                      
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shl_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_shl_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -150,9 +150,9 @@ static inline void k_shl_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- shr_r_r_q: IB_K_SHC ---- */
-static uint64_t k_shr_r_r_q(unsigned long long it)                                     
+static uint64_t k_shr_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     uint8_t n = 3;                                                                
     for (i = 0; i < it; i++)                                                      
@@ -160,9 +160,9 @@ static uint64_t k_shr_r_r_q(unsigned long long it)
                 : [a] "+r"(a), [v] "+r"(v) : "c"(n) : "cc");                      
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shr_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_shr_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -197,18 +197,18 @@ static inline void k_shr_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- shr_r_i_q: IB_K_SHI ---- */
-static uint64_t k_shr_r_i_q(unsigned long long it)                                     
+static uint64_t k_shr_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("shrq" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shr_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_shr_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -242,18 +242,18 @@ static inline void k_shr_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- sar_r_i_q: IB_K_SHI ---- */
-static uint64_t k_sar_r_i_q(unsigned long long it)                                     
+static uint64_t k_sar_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("sarq" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_sar_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_sar_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -287,18 +287,18 @@ static inline void k_sar_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- rol_r_i_q: IB_K_SHI ---- */
-static uint64_t k_rol_r_i_q(unsigned long long it)                                     
+static uint64_t k_rol_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("rolq" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_rol_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_rol_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -332,18 +332,18 @@ static inline void k_rol_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- ror_r_i_q: IB_K_SHI ---- */
-static uint64_t k_ror_r_i_q(unsigned long long it)                                     
+static uint64_t k_ror_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("rorq" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_ror_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_ror_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2), e = (IB_UQ)IB_SEED(4),                
        g = (IB_UQ)IB_SEED(6);                                                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), x = IB_TOPBIT(IB_UQ), y = IB_TOPBIT(IB_UQ); 
@@ -377,18 +377,18 @@ static inline void k_ror_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- shld_r_i_q: IB_K_SHD ---- */
-static uint64_t k_shld_r_i_q(unsigned long long it)                                     
+static uint64_t k_shld_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ), b = (IB_UQ)IB_SEED(1);                 
     for (i = 0; i < it; i++)                                                      
         __asm__("shldq" " $3,%[b],%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"              
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shld_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_shld_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2);                                    
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ);                                      
     IB_UQ b = (IB_UQ)IB_SEED(1);                                                        
@@ -418,18 +418,18 @@ static inline void k_shld_r_i_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- shrd_r_i_q: IB_K_SHD ---- */
-static uint64_t k_shrd_r_i_q(unsigned long long it)                                     
+static uint64_t k_shrd_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), v = IB_TOPBIT(IB_UQ), b = (IB_UQ)IB_SEED(1);                 
     for (i = 0; i < it; i++)                                                      
         __asm__("shrdq" " $3,%[b],%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"              
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shrd_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_shrd_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)IB_SEED(0), c = (IB_UQ)IB_SEED(2);                                    
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ);                                      
     IB_UQ b = (IB_UQ)IB_SEED(1);                                                        
@@ -461,18 +461,18 @@ static inline void k_shrd_r_i_q_kat(int kk, ib_kv *g)
 /* BMI2: 计数在普通寄存器里 -> 探针用 %[c](=%ecx) 而计时内核用 GCC 分配的 %[b];
  * 同一形态类(VEX 三操作数), 只是寄存器编号不同 -> 对翻译器同样有效 */
 /* ---- shlx_r_r_q: IB_K_SHX ---- */
-static uint64_t k_shlx_r_r_q(unsigned long long it)                                     
+static uint64_t k_shlx_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), v = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                    
     for (i = 0; i < it; i++)                                                      
         __asm__("shlx" " " "%[b],%[a],%[a]" "\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shlx_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_shlx_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), c = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                           
     for (i = 0; i < it; i++) {                                                    
@@ -501,18 +501,18 @@ static inline void k_shlx_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- sarx_r_r_q: IB_K_SHX ---- */
-static uint64_t k_sarx_r_r_q(unsigned long long it)                                     
+static uint64_t k_sarx_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), v = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                    
     for (i = 0; i < it; i++)                                                      
         __asm__("sarx" " " "%[b],%[a],%[a]" "\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_sarx_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_sarx_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), c = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                           
     for (i = 0; i < it; i++) {                                                    
@@ -541,18 +541,18 @@ static inline void k_sarx_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- shrx_r_r_q: IB_K_SHX ---- */
-static uint64_t k_shrx_r_r_q(unsigned long long it)                                     
+static uint64_t k_shrx_r_r_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), v = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                    
     for (i = 0; i < it; i++)                                                      
         __asm__("shrx" " " "%[b],%[a],%[a]" "\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shrx_r_r_q_tp(unsigned long long it)                                
+static uint64_t k_shrx_r_r_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), c = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                           
     for (i = 0; i < it; i++) {                                                    
@@ -581,18 +581,18 @@ static inline void k_shrx_r_r_q_kat(int kk, ib_kv *g)
 }
 
 /* ---- rorx_r_i_q: IB_K_SHX ---- */
-static uint64_t k_rorx_r_i_q(unsigned long long it)                                     
+static uint64_t k_rorx_r_i_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), v = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                    
     for (i = 0; i < it; i++)                                                      
         __asm__("rorx" " " "$3,%[a],%[a]" "\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_rorx_r_i_q_tp(unsigned long long it)                                
+static uint64_t k_rorx_r_i_q_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)(IB_SEED(0) | 1), c = (IB_UQ)(IB_SEED(2) | 1);                        
     IB_UQ v = IB_TOPBIT(IB_UQ), w = IB_TOPBIT(IB_UQ), b = (IB_UQ)3;                           
     for (i = 0; i < it; i++) {                                                    
@@ -624,18 +624,18 @@ static inline void k_rorx_r_i_q_kat(int kk, ib_kv *g)
 
 /* ---------------- 两 ABI 共有形态 ---------------- */
 /* ---- shl_r_i_l: IB_K_SHI ---- */
-static uint64_t k_shl_r_i_l(unsigned long long it)                                     
+static uint64_t k_shl_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), v = IB_TOPBIT(IB_UL);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("shll" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shl_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_shl_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     IB_UL v = IB_TOPBIT(IB_UL), w = IB_TOPBIT(IB_UL), x = IB_TOPBIT(IB_UL), y = IB_TOPBIT(IB_UL); 
@@ -669,18 +669,18 @@ static inline void k_shl_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- shr_r_i_l: IB_K_SHI ---- */
-static uint64_t k_shr_r_i_l(unsigned long long it)                                     
+static uint64_t k_shr_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), v = IB_TOPBIT(IB_UL);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("shrl" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shr_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_shr_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     IB_UL v = IB_TOPBIT(IB_UL), w = IB_TOPBIT(IB_UL), x = IB_TOPBIT(IB_UL), y = IB_TOPBIT(IB_UL); 
@@ -714,18 +714,18 @@ static inline void k_shr_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- shr_r_i_b: IB_K_SHI8 ---- */
-static uint64_t k_shr_r_i_b(unsigned long long it)                                     
+static uint64_t k_shr_r_i_b(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), v = IB_TOPBIT(IB_UB);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("shrb" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+a"(a), [v] "+b"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shr_r_i_b_tp(unsigned long long it)                                
+static uint64_t k_shr_r_i_b_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UB a = (IB_UB)IB_SEED(0), c = (IB_UB)IB_SEED(2);                                    
     IB_UB v = IB_TOPBIT(IB_UB), w = IB_TOPBIT(IB_UB);                                      
     for (i = 0; i < it; i++) {                                                    
@@ -754,18 +754,18 @@ static inline void k_shr_r_i_b_kat(int kk, ib_kv *g)
 }
 
 /* ---- sar_r__l: IB_K_SH1 ---- */
-static uint64_t k_sar_r__l(unsigned long long it)                                     
+static uint64_t k_sar_r__l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), v = IB_TOPBIT(IB_UL);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("sarl" " %[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                      
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_sar_r__l_tp(unsigned long long it)                                
+static uint64_t k_sar_r__l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     IB_UL v = IB_TOPBIT(IB_UL), w = IB_TOPBIT(IB_UL), x = IB_TOPBIT(IB_UL), y = IB_TOPBIT(IB_UL); 
@@ -799,18 +799,18 @@ static inline void k_sar_r__l_kat(int kk, ib_kv *g)
 }
 
 /* ---- rol_r_i_l: IB_K_SHI ---- */
-static uint64_t k_rol_r_i_l(unsigned long long it)                                     
+static uint64_t k_rol_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), v = IB_TOPBIT(IB_UL);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("roll" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_rol_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_rol_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     IB_UL v = IB_TOPBIT(IB_UL), w = IB_TOPBIT(IB_UL), x = IB_TOPBIT(IB_UL), y = IB_TOPBIT(IB_UL); 
@@ -844,18 +844,18 @@ static inline void k_rol_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- rol_r_i_w: IB_K_SHI8 ---- */
-static uint64_t k_rol_r_i_w(unsigned long long it)                                     
+static uint64_t k_rol_r_i_w(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UW a = (IB_UW)IB_SEED(0), v = IB_TOPBIT(IB_UW);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("rolw" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+a"(a), [v] "+b"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_rol_r_i_w_tp(unsigned long long it)                                
+static uint64_t k_rol_r_i_w_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UW a = (IB_UW)IB_SEED(0), c = (IB_UW)IB_SEED(2);                                    
     IB_UW v = IB_TOPBIT(IB_UW), w = IB_TOPBIT(IB_UW);                                      
     for (i = 0; i < it; i++) {                                                    
@@ -884,18 +884,18 @@ static inline void k_rol_r_i_w_kat(int kk, ib_kv *g)
 }
 
 /* ---- ror_r_i_l: IB_K_SHI ---- */
-static uint64_t k_ror_r_i_l(unsigned long long it)                                     
+static uint64_t k_ror_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), v = IB_TOPBIT(IB_UL);                                     
     for (i = 0; i < it; i++)                                                      
         __asm__("rorl" " $3,%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"                   
                 : [a] "+r"(a), [v] "+r"(v) : : "cc");                             
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_ror_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_ror_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), e = (IB_UL)IB_SEED(4),                
        g = (IB_UL)IB_SEED(6);                                                        
     IB_UL v = IB_TOPBIT(IB_UL), w = IB_TOPBIT(IB_UL), x = IB_TOPBIT(IB_UL), y = IB_TOPBIT(IB_UL); 
@@ -929,18 +929,18 @@ static inline void k_ror_r_i_l_kat(int kk, ib_kv *g)
 }
 
 /* ---- shld_r_i_l: IB_K_SHD ---- */
-static uint64_t k_shld_r_i_l(unsigned long long it)                                     
+static uint64_t k_shld_r_i_l(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), v = IB_TOPBIT(IB_UL), b = (IB_UL)IB_SEED(1);                 
     for (i = 0; i < it; i++)                                                      
         __asm__("shldl" " $3,%[b],%[a]\n\tadc $0,%[v]\n\tadd %[v],%[a]"              
                 : [a] "+r"(a), [v] "+r"(v) : [b] "r"(b) : "cc");                  
     return IB_S2((uint64_t)a, (uint64_t)v);                                       
 }                                                                                 
-static uint64_t k_shld_r_i_l_tp(unsigned long long it)                                
+static uint64_t k_shld_r_i_l_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2);                                    
     IB_UL v = IB_TOPBIT(IB_UL), w = IB_TOPBIT(IB_UL);                                      
     IB_UL b = (IB_UL)IB_SEED(1);                                                        

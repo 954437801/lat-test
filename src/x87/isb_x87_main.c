@@ -483,10 +483,10 @@ void rc_fistp_core(int kk, unsigned enc, const char *stem, ib_kv *g)
 }
 
 
-uint64_t rc_fistp_tp_core(unsigned long long iters, unsigned enc)
+uint64_t rc_fistp_tp_core(ib_uw iters, unsigned enc)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *s = fput(0, q4bits(RVQ[0]));
     void *d64 = fput(8, IB_POISON);
     void *d32 = fput(9, IB_POISON);
@@ -568,10 +568,10 @@ void pc_fmul_core(int kk, unsigned enc, const char *stem, ib_kv *g)
 
 /* 定时长体与取值体的差别只在"循环里重复那三条": fldcw 落在循环外(同 RC 一侧的
  * 理由), 不种异常(finit 已把挂起异常清零, 本组入值不溢出不除零)。 */
-uint64_t pc_fadd_tp(unsigned long long iters, unsigned enc)
+uint64_t pc_fadd_tp(ib_uw iters, unsigned enc)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *a = fput(0, FAVEC[0]);
     const void *b = fput(1, FBVEC[0]);
     void *t = &g_t[0];
@@ -585,10 +585,10 @@ uint64_t pc_fadd_tp(unsigned long long iters, unsigned enc)
 }
 
 
-uint64_t pc_fmul_tp(unsigned long long iters, unsigned enc)
+uint64_t pc_fmul_tp(ib_uw iters, unsigned enc)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const void *a = fput(0, FMVEC[0]);
     void *t = &g_t[0];
 
@@ -734,10 +734,10 @@ __attribute__((noinline)) void x87_bin80_core(int kk, const struct xbop *t,
 
 
 /* 定时长体与取值体同形(两条指令一进一出, 栈深每圈回到 finit 后的 0) */
-uint64_t x87_bin80_tp(unsigned long long iters, const struct xbop *t)
+uint64_t x87_bin80_tp(ib_uw iters, const struct xbop *t)
 {
     X87_BEGIN();
-    unsigned long long i;
+    ib_uw i;
     const struct xbop *e = &t[0];
     const void *pr = tput80(0, XBOP[e->ri].mant, XBOP[e->ri].se);
     const void *pl = tput80(1, XBOP[e->li].mant, XBOP[e->li].se);

@@ -15,9 +15,9 @@
 
 /* ---------------- add_r64: 延迟参考下限 ----------------
  * 线性递推 a+=b 会被 GCC 闭式折叠(实测 0.00 ns/op), 用 asm 钉死依赖链。 */
-static uint64_t k_add_r64(unsigned long long iters)
+static uint64_t k_add_r64(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 #ifdef __x86_64__
     uint64_t a = 0x1122334455667788ULL, b = 0x9e3779b97f4a7c15ULL;
     for (i = 0; i < iters; i++)
@@ -30,9 +30,9 @@ static uint64_t k_add_r64(unsigned long long iters)
     return a;
 #endif
 }
-static uint64_t k_add_r64_tp(unsigned long long iters)
+static uint64_t k_add_r64_tp(ib_uw iters)
 {
-    unsigned long long i;
+    ib_uw i;
 #ifdef __x86_64__
     uint64_t a = 0x1122334455667788ULL, b = 0x9e3779b97f4a7c15ULL;
     uint64_t c = 0x243f6a8885a308d3ULL, d = 0x13198a2e03707344ULL;
@@ -65,10 +65,10 @@ static uint64_t k_add_r64_tp(unsigned long long iters)
  * 优化(判定口径见 docs/设计/功能测试与KAT.md)。x86-64: 8 链; i386(仅 7 GPR): 4 链 x 每轮 2
  * 相位, 块内仍 8 条连续指令。asm volatile 单基址+位移: 防 "m" 地址提升。 */
 static uint64_t g_b8[144] __attribute__((aligned(64)));  /* 18x64B: o+位移 最大 1072B 不越界 */
-static uint64_t k_add_r64_b8(unsigned long long iters)
+static uint64_t k_add_r64_b8(ib_uw iters)
 {
     uintptr_t o = 0;
-    unsigned long long i;
+    ib_uw i;
 #ifdef __x86_64__
     uint64_t a0 = 0x1122334455667788ULL, a1 = 0x9e3779b97f4a7c15ULL,
              a2 = 0x243f6a8885a308d3ULL, a3 = 0x13198a2e03707344ULL,
@@ -115,19 +115,19 @@ static uint64_t k_add_r64_b8(unsigned long long iters)
 }
 
 /* ---------------- mul_r64: 乘法延迟链(链不可闭式折叠) ---------------- */
-static uint64_t k_mul_r64(unsigned long long iters)
+static uint64_t k_mul_r64(ib_uw iters)
 {
     uint64_t a = 0x1122334455667788ULL, k = 0x9e3779b97f4a7c15ULL;
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++)
         a *= k;
     return a;
 }
-static uint64_t k_mul_r64_tp(unsigned long long iters)
+static uint64_t k_mul_r64_tp(ib_uw iters)
 {
     uint64_t a = 0x1122334455667788ULL, b = 0x9e3779b97f4a7c15ULL,
              c = 0x243f6a8885a308d3ULL, d = 0x13198a2e03707344ULL;
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) {
         a *= 0x9e3779b97f4a7c15ULL;
         b *= 0x243f6a8885a308d3ULL;
@@ -139,11 +139,11 @@ static uint64_t k_mul_r64_tp(unsigned long long iters)
 
 /* ---------------- crc32: 混合链(rng 依赖 + crc32 旁路, 与 legacy 同构) ---------------- */
 __attribute__((target("sse4.2")))
-static uint64_t k_crc32(unsigned long long iters)
+static uint64_t k_crc32(ib_uw iters)
 {
     uint32_t k = 0x12345678u;
     uint32_t a = 0xdeadbeefu;
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) {
         k = k * 2654435761u + 1u;
         a = _mm_crc32_u32(a, k);
@@ -151,11 +151,11 @@ static uint64_t k_crc32(unsigned long long iters)
     return a;
 }
 __attribute__((target("sse4.2")))
-static uint64_t k_crc32_tp(unsigned long long iters)
+static uint64_t k_crc32_tp(ib_uw iters)
 {
     uint32_t a = 0xdeadbeefu, b = 0x13579bdfu, c = 0xcafef00du, d = 0x0badf00du;
     uint32_t k1 = 0x12345678u, k2 = 0x23456789u, k3 = 0x3456789au, k4 = 0x456789abu;
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) {
         k1 = k1 * 2654435761u + 1u;
         k2 = k2 * 2654435761u + 1u;

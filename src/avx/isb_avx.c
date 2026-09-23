@@ -25,63 +25,63 @@ static inline __m256i wrot256(int *k)
 }
 
 /* ==================== AVX(128+256, target="avx") ==================== */
-__attribute__((target("avx"))) static uint64_t k_vaddps_xmm(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vaddps_xmm(ib_uw iters)
 {
-    __m128 a = _mm_set1_ps(1.0f); int k = 0; unsigned long long i;
+    __m128 a = _mm_set1_ps(1.0f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm_add_ps(a, _mm_castsi128_ps(_mm256_castsi256_si128(wrot256(&k))));
     return ib_sig128(_mm_castps_si128(a));
 }
-__attribute__((target("avx"))) static uint64_t k_vaddps_xmm_tp(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vaddps_xmm_tp(ib_uw iters)
 {
     __m128 a = _mm_set1_ps(1.0f), b = _mm_set1_ps(1.5f), c = _mm_set1_ps(2.5f), d = _mm_set1_ps(3.5f);
-    int k = 0; unsigned long long i;
+    int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m128 w = _mm_castsi128_ps(_mm256_castsi256_si128(wrot256(&k)));
         a = _mm_add_ps(a, w); b = _mm_add_ps(b, w); c = _mm_add_ps(c, w); d = _mm_add_ps(d, w); }
     return ib_sig128(_mm_castps_si128(a)) ^ ib_sig128(_mm_castps_si128(b)) ^
            ib_sig128(_mm_castps_si128(c)) ^ ib_sig128(_mm_castps_si128(d));
 }
-__attribute__((target("avx"))) static uint64_t k_vaddps_ymm(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vaddps_ymm(ib_uw iters)
 {
-    __m256 a = _mm256_set1_ps(1.0f); int k = 0; unsigned long long i;
+    __m256 a = _mm256_set1_ps(1.0f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_add_ps(a, _mm256_castsi256_ps(wrot256(&k)));
     return ib_sig256(_mm256_castps_si256(a));
 }
-__attribute__((target("avx"))) static uint64_t k_vaddps_ymm_tp(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vaddps_ymm_tp(ib_uw iters)
 {
     __m256 a = _mm256_set1_ps(1.0f), b = _mm256_set1_ps(1.5f), c = _mm256_set1_ps(2.5f),
-           d = _mm256_set1_ps(3.5f); int k = 0; unsigned long long i;
+           d = _mm256_set1_ps(3.5f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256 w = _mm256_castsi256_ps(wrot256(&k));
         a = _mm256_add_ps(a, w); b = _mm256_add_ps(b, w); c = _mm256_add_ps(c, w); d = _mm256_add_ps(d, w); }
     return ib_sig256(_mm256_castps_si256(a)) ^ ib_sig256(_mm256_castps_si256(b)) ^
            ib_sig256(_mm256_castps_si256(c)) ^ ib_sig256(_mm256_castps_si256(d));
 }
-__attribute__((target("avx"))) static uint64_t k_vmulps_ymm(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vmulps_ymm(ib_uw iters)
 {
-    __m256 a = _mm256_set1_ps(1.0f); int k = 0; unsigned long long i;
+    __m256 a = _mm256_set1_ps(1.0f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_mul_ps(a, _mm256_castsi256_ps(wrot256(&k)));
     return ib_sig256(_mm256_castps_si256(a));
 }
-__attribute__((target("avx"))) static uint64_t k_vmulps_ymm_tp(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vmulps_ymm_tp(ib_uw iters)
 {
     __m256 a = _mm256_set1_ps(1.0f), b = _mm256_set1_ps(1.5f), c = _mm256_set1_ps(2.5f),
-           d = _mm256_set1_ps(3.5f); int k = 0; unsigned long long i;
+           d = _mm256_set1_ps(3.5f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256 w = _mm256_castsi256_ps(wrot256(&k));
         a = _mm256_mul_ps(a, w); b = _mm256_mul_ps(b, w); c = _mm256_mul_ps(c, w); d = _mm256_mul_ps(d, w); }
     return ib_sig256(_mm256_castps_si256(a)) ^ ib_sig256(_mm256_castps_si256(b)) ^
            ib_sig256(_mm256_castps_si256(c)) ^ ib_sig256(_mm256_castps_si256(d));
 }
 /* 访存: vmovaps ymm 轮转 load(asm 钉死防最后化) */
-__attribute__((target("avx"))) static uint64_t k_vmovaps_ymm(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vmovaps_ymm(ib_uw iters)
 {
-    __m256 s = _mm256_setzero_ps(); int k = 0; unsigned long long i;
+    __m256 s = _mm256_setzero_ps(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { const float *p = &g_yf[NEXTK(k, 16) << 3];
         __asm__ volatile("vmovaps (%1),%0" : "=x"(s) : "r"(p)); }
     return ib_sig256(_mm256_castps_si256(s));
 }
-__attribute__((target("avx"))) static uint64_t k_vmovaps_ymm_tp(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vmovaps_ymm_tp(ib_uw iters)
 {
     __m256 s0 = _mm256_setzero_ps(), s1 = _mm256_setzero_ps(), s2 = _mm256_setzero_ps(),
-           s3 = _mm256_setzero_ps(); int k = 0; unsigned long long i;
+           s3 = _mm256_setzero_ps(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { const float *p0 = &g_yf[NEXTK(k, 16) << 3],
         *p1 = &g_yf[((NEXTK(k, 16) + 1) & 15) << 3], *p2 = &g_yf[((NEXTK(k, 16) + 4) & 15) << 3],
         *p3 = &g_yf[((NEXTK(k, 16) + 8) & 15) << 3];
@@ -94,91 +94,91 @@ __attribute__((target("avx"))) static uint64_t k_vmovaps_ymm_tp(unsigned long lo
 }
 
 /* ==================== AVX2(target="avx2") ==================== */
-__attribute__((target("avx2"))) static uint64_t k_vpxor_ymm(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpxor_ymm(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi32(0x5a5a5a5a); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi32(0x5a5a5a5a); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_xor_si256(a, wrot256(&k));
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpxor_ymm_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpxor_ymm_tp(ib_uw iters)
 {
     __m256i a = _mm256_set1_epi32(1), b = _mm256_set1_epi32(2), c = _mm256_set1_epi32(3),
-            d = _mm256_set1_epi32(4); int k = 0; unsigned long long i;
+            d = _mm256_set1_epi32(4); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         a = _mm256_xor_si256(a, w); b = _mm256_xor_si256(b, w);
         c = _mm256_xor_si256(c, w); d = _mm256_xor_si256(d, w); }
     return ib_sig256(a) ^ ib_sig256(b) ^ ib_sig256(c) ^ ib_sig256(d);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpaddd_ymm(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpaddd_ymm(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi32(0x5a5a5a5a); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi32(0x5a5a5a5a); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_add_epi32(a, wrot256(&k));
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpaddd_ymm_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpaddd_ymm_tp(ib_uw iters)
 {
     __m256i a = _mm256_set1_epi32(1), b = _mm256_set1_epi32(2), c = _mm256_set1_epi32(3),
-            d = _mm256_set1_epi32(4); int k = 0; unsigned long long i;
+            d = _mm256_set1_epi32(4); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         a = _mm256_add_epi32(a, w); b = _mm256_add_epi32(b, w);
         c = _mm256_add_epi32(c, w); d = _mm256_add_epi32(d, w); }
     return ib_sig256(a) ^ ib_sig256(b) ^ ib_sig256(c) ^ ib_sig256(d);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpsrad_ymm(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpsrad_ymm(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi32(-8); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi32(-8); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_srai_epi32(_mm256_xor_si256(a, wrot256(&k)), 1);
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpsrad_ymm_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpsrad_ymm_tp(ib_uw iters)
 {
     __m256i a = _mm256_set1_epi32(-8), b = _mm256_set1_epi32(-16), c = _mm256_set1_epi32(-32),
-            d = _mm256_set1_epi32(-64); int k = 0; unsigned long long i;
+            d = _mm256_set1_epi32(-64); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         a = _mm256_srai_epi32(_mm256_xor_si256(a, w), 1); b = _mm256_srai_epi32(_mm256_xor_si256(b, w), 1);
         c = _mm256_srai_epi32(_mm256_xor_si256(c, w), 1); d = _mm256_srai_epi32(_mm256_xor_si256(d, w), 1); }
     return ib_sig256(a) ^ ib_sig256(b) ^ ib_sig256(c) ^ ib_sig256(d);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpmaddwd_ymm(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpmaddwd_ymm(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi16(3); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi16(3); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_madd_epi16(a, wrot256(&k));
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpmaddwd_ymm_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpmaddwd_ymm_tp(ib_uw iters)
 {
     __m256i a = _mm256_set1_epi16(3), b = _mm256_set1_epi16(5), c = _mm256_set1_epi16(7),
-            d = _mm256_set1_epi16(9); int k = 0; unsigned long long i;
+            d = _mm256_set1_epi16(9); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         a = _mm256_madd_epi16(a, w); b = _mm256_madd_epi16(b, w);
         c = _mm256_madd_epi16(c, w); d = _mm256_madd_epi16(d, w); }
     return ib_sig256(a) ^ ib_sig256(b) ^ ib_sig256(c) ^ ib_sig256(d);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpmulld_ymm(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpmulld_ymm(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi32(3); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi32(3); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_mullo_epi32(a, wrot256(&k));
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpmulld_ymm_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpmulld_ymm_tp(ib_uw iters)
 {
     __m256i a = _mm256_set1_epi32(3), b = _mm256_set1_epi32(5), c = _mm256_set1_epi32(7),
-            d = _mm256_set1_epi32(9); int k = 0; unsigned long long i;
+            d = _mm256_set1_epi32(9); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         a = _mm256_mullo_epi32(a, w); b = _mm256_mullo_epi32(b, w);
         c = _mm256_mullo_epi32(c, w); d = _mm256_mullo_epi32(d, w); }
     return ib_sig256(a) ^ ib_sig256(b) ^ ib_sig256(c) ^ ib_sig256(d);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpbroadcastd(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpbroadcastd(ib_uw iters)
 {
-    __m256i a = _mm256_setzero_si256(); int k = 0; unsigned long long i;
+    __m256i a = _mm256_setzero_si256(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_add_epi32(a, _mm256_set1_epi32(g_yi[NEXTK(k, 127)]));
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpbroadcastd_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpbroadcastd_tp(ib_uw iters)
 {
     __m256i a = _mm256_setzero_si256(), b = _mm256_setzero_si256(), c = _mm256_setzero_si256(),
-            d = _mm256_setzero_si256(); int k = 0; unsigned long long i;
+            d = _mm256_setzero_si256(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { int v = g_yi[NEXTK(k, 127)];
         a = _mm256_add_epi32(a, _mm256_set1_epi32(v));
         b = _mm256_add_epi32(b, _mm256_set1_epi32(v + 1));
@@ -186,17 +186,17 @@ __attribute__((target("avx2"))) static uint64_t k_vpbroadcastd_tp(unsigned long 
         d = _mm256_add_epi32(d, _mm256_set1_epi32(v + 3)); }
     return ib_sig256(a) ^ ib_sig256(b) ^ ib_sig256(c) ^ ib_sig256(d);
 }
-__attribute__((target("avx2"))) static uint64_t k_vmovdqa_ymm(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vmovdqa_ymm(ib_uw iters)
 {
-    __m256i s = _mm256_setzero_si256(); int k = 0; unsigned long long i;
+    __m256i s = _mm256_setzero_si256(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { const int32_t *p = &g_yi[NEXTK(k, 16) << 3];
         __asm__ volatile("vmovdqa (%1),%0" : "=x"(s) : "r"(p)); }
     return ib_sig256(s);
 }
-__attribute__((target("avx2"))) static uint64_t k_vmovdqa_ymm_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vmovdqa_ymm_tp(ib_uw iters)
 {
     __m256i s0 = _mm256_setzero_si256(), s1 = _mm256_setzero_si256(), s2 = _mm256_setzero_si256(),
-            s3 = _mm256_setzero_si256(); int k = 0; unsigned long long i;
+            s3 = _mm256_setzero_si256(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { const int32_t *p0 = &g_yi[NEXTK(k, 16) << 3],
         *p1 = &g_yi[((NEXTK(k, 16) + 1) & 15) << 3], *p2 = &g_yi[((NEXTK(k, 16) + 4) & 15) << 3],
         *p3 = &g_yi[((NEXTK(k, 16) + 8) & 15) << 3];
@@ -208,16 +208,16 @@ __attribute__((target("avx2"))) static uint64_t k_vmovdqa_ymm_tp(unsigned long l
 }
 
 /* ==================== FMA(target="fma") ==================== */
-__attribute__((target("fma"))) static uint64_t k_vfmadd213ps(unsigned long long iters)
+__attribute__((target("fma"))) static uint64_t k_vfmadd213ps(ib_uw iters)
 {
-    __m256 a = _mm256_set1_ps(1.0f), c = _mm256_setzero_ps(); int k = 0; unsigned long long i;
+    __m256 a = _mm256_set1_ps(1.0f), c = _mm256_setzero_ps(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_fmadd_ps(a, _mm256_castsi256_ps(wrot256(&k)), c);
     return ib_sig256(_mm256_castps_si256(a));
 }
-__attribute__((target("fma"))) static uint64_t k_vfmadd213ps_tp(unsigned long long iters)
+__attribute__((target("fma"))) static uint64_t k_vfmadd213ps_tp(ib_uw iters)
 {
     __m256 a = _mm256_set1_ps(1.0f), b = _mm256_set1_ps(1.5f), c0 = _mm256_set1_ps(2.5f),
-           d = _mm256_set1_ps(3.5f), c = _mm256_setzero_ps(); int k = 0; unsigned long long i;
+           d = _mm256_set1_ps(3.5f), c = _mm256_setzero_ps(); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256 w = _mm256_castsi256_ps(wrot256(&k));
         a = _mm256_fmadd_ps(a, w, c); b = _mm256_fmadd_ps(b, w, c);
         c0 = _mm256_fmadd_ps(c0, w, c); d = _mm256_fmadd_ps(d, w, c); }
@@ -226,21 +226,21 @@ __attribute__((target("fma"))) static uint64_t k_vfmadd213ps_tp(unsigned long lo
 }
 
 /* ==================== 自 vec 组迁入的 7 条 VEX 形态(归位: avx = 全部 VEX 编码) ==================== */
-__attribute__((target("avx"))) static uint64_t k_vmovdqu(unsigned long long iters){ __m256i s=_mm256_setzero_si256(); int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ const int32_t *p=&g_yi[NEXTK(k,16)<<3];
+__attribute__((target("avx"))) static uint64_t k_vmovdqu(ib_uw iters){ __m256i s=_mm256_setzero_si256(); int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ const int32_t *p=&g_yi[NEXTK(k,16)<<3];
         __asm__ volatile("vmovdqu (%1),%0" : "=x"(s) : "r"(p)); }
     return ib_sig256(s); }
-__attribute__((target("avx"))) static uint64_t k_vmovdqu_tp(unsigned long long iters){ __m256i s0=_mm256_setzero_si256(),s1=s0,s2=s0,s3=s0; int k=0;
-    unsigned long long i; for(i=0;i<iters;i++){ int j=NEXTK(k,16); const int32_t *p0=&g_yi[j<<3],
+__attribute__((target("avx"))) static uint64_t k_vmovdqu_tp(ib_uw iters){ __m256i s0=_mm256_setzero_si256(),s1=s0,s2=s0,s3=s0; int k=0;
+    ib_uw i; for(i=0;i<iters;i++){ int j=NEXTK(k,16); const int32_t *p0=&g_yi[j<<3],
         *p1=&g_yi[((j+1)&15)<<3], *p2=&g_yi[((j+4)&15)<<3], *p3=&g_yi[((j+8)&15)<<3];
         __asm__ volatile("vmovdqu (%1),%0" : "=x"(s0) : "r"(p0));
         __asm__ volatile("vmovdqu (%1),%0" : "=x"(s1) : "r"(p1));
         __asm__ volatile("vmovdqu (%1),%0" : "=x"(s2) : "r"(p2));
         __asm__ volatile("vmovdqu (%1),%0" : "=x"(s3) : "r"(p3)); }
     return ib_sig256(s0)^ib_sig256(s1)^ib_sig256(s2)^ib_sig256(s3); }
-__attribute__((target("avx"))) static uint64_t k_vptest_tp(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vptest_tp(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi32(0x0f0f0f0f); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi32(0x0f0f0f0f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         __asm__ volatile("vptest %1,%0" : : "x"(a), "x"(w) : "cc");
         __asm__ volatile("vptest %1,%0" : : "x"(a), "x"(w) : "cc");
@@ -248,18 +248,18 @@ __attribute__((target("avx"))) static uint64_t k_vptest_tp(unsigned long long it
         __asm__ volatile("vptest %1,%0" : : "x"(a), "x"(w) : "cc"); }
     return ib_sig256(a);
 }
-__attribute__((target("avx"))) static uint64_t k_vinsertf128(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vinsertf128(ib_uw iters)
 {
-    __m256 a = _mm256_set1_ps(1.5f); int k = 0; unsigned long long i;
+    __m256 a = _mm256_set1_ps(1.5f); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256 w = _mm256_castsi256_ps(wrot256(&k));
         a = _mm256_insertf128_ps(_mm256_xor_ps(a, w), _mm256_castps256_ps128(w), 1); }
     return ib_sig256(_mm256_castps_si256(a));
 }
-__attribute__((target("avx"))) static uint64_t k_vinsertf128_tp(unsigned long long iters)
+__attribute__((target("avx"))) static uint64_t k_vinsertf128_tp(ib_uw iters)
 {
     __m256 a = _mm256_set1_ps(1.5f), b = _mm256_set1_ps(2.5f),
            c = _mm256_set1_ps(0.25f), d = _mm256_set1_ps(7.75f);
-    int k = 0; unsigned long long i;
+    int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256 w = _mm256_castsi256_ps(wrot256(&k));
         a = _mm256_insertf128_ps(_mm256_xor_ps(a, w), _mm256_castps256_ps128(w), 1);
         b = _mm256_insertf128_ps(_mm256_xor_ps(b, w), _mm256_castps256_ps128(w), 1);
@@ -269,31 +269,31 @@ __attribute__((target("avx"))) static uint64_t k_vinsertf128_tp(unsigned long lo
            ib_sig256(_mm256_castps_si256(c)) ^ ib_sig256(_mm256_castps_si256(d));
 }
 #define YSHIFT(name, EXPR)                                                            \
-__attribute__((target("avx2"))) static uint64_t k_##name(unsigned long long iters){ \
+__attribute__((target("avx2"))) static uint64_t k_##name(ib_uw iters){ \
     __m256i a=_mm256_set1_epi32(0x5a5a5a5a); int k=0;                                \
-    unsigned long long i; for(i=0;i<iters;i++){ __m256i w=wrot256(&k); a=EXPR; }     \
+    ib_uw i; for(i=0;i<iters;i++){ __m256i w=wrot256(&k); a=EXPR; }     \
     return ib_sig256(a); }                                                            \
-__attribute__((target("avx2"))) static uint64_t k_##name##_tp(unsigned long long iters){ \
+__attribute__((target("avx2"))) static uint64_t k_##name##_tp(ib_uw iters){ \
     __m256i a=_mm256_set1_epi32(0x5a5a5a5a), b=_mm256_set1_epi32(0x3c3c3c3c),        \
            c=_mm256_set1_epi32(0x0f0f0f0f), d=_mm256_set1_epi32(0x77777777);         \
-    int k=0; unsigned long long i;                                                    \
+    int k=0; ib_uw i;                                                    \
     for(i=0;i<iters;i++){ __m256i w=wrot256(&k); a=EXPR; b=EXPR; c=EXPR; d=EXPR; }   \
     return ib_sig256(a)^ib_sig256(b)^ib_sig256(c)^ib_sig256(d); }
 YSHIFT(vpsllq, _mm256_xor_si256(_mm256_slli_epi64(a, 11), w))
 YSHIFT(vpsrlq, _mm256_xor_si256(_mm256_srli_epi64(a, 7), w))
 YSHIFT(vpsrlw, _mm256_xor_si256(_mm256_srli_epi16(a, 3), w))
 #undef YSHIFT
-__attribute__((target("avx2"))) static uint64_t k_vpaddq(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpaddq(ib_uw iters)
 {
-    __m256i a = _mm256_set1_epi64x(1); int k = 0; unsigned long long i;
+    __m256i a = _mm256_set1_epi64x(1); int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) a = _mm256_add_epi64(a, wrot256(&k));
     return ib_sig256(a);
 }
-__attribute__((target("avx2"))) static uint64_t k_vpaddq_tp(unsigned long long iters)
+__attribute__((target("avx2"))) static uint64_t k_vpaddq_tp(ib_uw iters)
 {
     __m256i a = _mm256_set1_epi64x(1), b = _mm256_set1_epi64x(2),
             c = _mm256_set1_epi64x(3), d = _mm256_set1_epi64x(4);
-    int k = 0; unsigned long long i;
+    int k = 0; ib_uw i;
     for (i = 0; i < iters; i++) { __m256i w = wrot256(&k);
         a = _mm256_add_epi64(a, w); b = _mm256_add_epi64(b, w);
         c = _mm256_add_epi64(c, w); d = _mm256_add_epi64(d, w); }

@@ -68,9 +68,9 @@
 /* ---------------- 64 位形态(仅 x86_64) ---------------- */
 #ifdef __x86_64__
 /* ---- push_m_r_q_rsp: IB_K_PUSH ---- */
-static uint64_t k_push_m_r_q_rsp(unsigned long long it)                                     
+static uint64_t k_push_m_r_q_rsp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     const void *p = (const void *)IB_RBASE();                                     
     uintptr_t ix = 0;                                                             
@@ -82,9 +82,9 @@ static uint64_t k_push_m_r_q_rsp(unsigned long long it)
                 : [p] "r"(p), [ix] "r"(ix) : "memory");                           
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_push_m_r_q_rsp_tp(unsigned long long it)                                
+static uint64_t k_push_m_r_q_rsp_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     IB_UQ c = (IB_UQ)((IB_SEED(2) & 0xffff) | 1), g = (IB_UQ)0;                            
     IB_UQ e = (IB_UQ)((IB_SEED(4) & 0xffff) | 1), h = (IB_UQ)0;                            
@@ -131,9 +131,9 @@ static inline void k_push_m_r_q_rsp_kat(int kk, ib_kv *g)
 }
 
 /* ---- push_m_i_q_rsp: IB_K_PUSH ---- */
-static uint64_t k_push_m_i_q_rsp(unsigned long long it)                                     
+static uint64_t k_push_m_i_q_rsp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     const void *p = (const void *)IB_RBASE();                                     
     uintptr_t ix = 0;                                                             
@@ -145,9 +145,9 @@ static uint64_t k_push_m_i_q_rsp(unsigned long long it)
                 : [p] "r"(p), [ix] "r"(ix) : "memory");                           
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_push_m_i_q_rsp_tp(unsigned long long it)                                
+static uint64_t k_push_m_i_q_rsp_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     IB_UQ c = (IB_UQ)((IB_SEED(2) & 0xffff) | 1), g = (IB_UQ)0;                            
     IB_UQ e = (IB_UQ)((IB_SEED(4) & 0xffff) | 1), h = (IB_UQ)0;                            
@@ -194,9 +194,9 @@ static inline void k_push_m_i_q_rsp_kat(int kk, ib_kv *g)
 }
 
 /* ---- push_m_m_q_rsp: IB_K_PUSH ---- */
-static uint64_t k_push_m_m_q_rsp(unsigned long long it)                                     
+static uint64_t k_push_m_m_q_rsp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     const void *p = (const void *)IB_RBASE();                                     
     uintptr_t ix = 0;                                                             
@@ -208,9 +208,9 @@ static uint64_t k_push_m_m_q_rsp(unsigned long long it)
                 : [p] "r"(p), [ix] "r"(ix) : "memory");                           
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_push_m_m_q_rsp_tp(unsigned long long it)                                
+static uint64_t k_push_m_m_q_rsp_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     IB_UQ c = (IB_UQ)((IB_SEED(2) & 0xffff) | 1), g = (IB_UQ)0;                            
     IB_UQ e = (IB_UQ)((IB_SEED(4) & 0xffff) | 1), h = (IB_UQ)0;                            
@@ -257,9 +257,9 @@ static inline void k_push_m_m_q_rsp_kat(int kk, ib_kv *g)
 }
 
 /* ---- pop_r_m_q_rsp: IB_K_POPR ---- */
-static uint64_t k_pop_r_m_q_rsp(unsigned long long it)                                     
+static uint64_t k_pop_r_m_q_rsp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     for (i = 0; i < it; i++)                                                      
         __asm__("push" "q" " %[a]\n\t"                                            
@@ -268,9 +268,9 @@ static uint64_t k_pop_r_m_q_rsp(unsigned long long it)
                 : [a] "+r"(a), [f] "=&r"(f) : : "memory");                        
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_pop_r_m_q_rsp_tp(unsigned long long it)                                
+static uint64_t k_pop_r_m_q_rsp_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     IB_UQ c = (IB_UQ)((IB_SEED(2) & 0xffff) | 1), g = (IB_UQ)0;                            
     IB_UQ e = (IB_UQ)((IB_SEED(4) & 0xffff) | 1), h = (IB_UQ)0;                            
@@ -308,9 +308,9 @@ static inline void k_pop_r_m_q_rsp_kat(int kk, ib_kv *g)
 }
 
 /* ---- pop_m_m_q_rsp: IB_K_POPM ---- */
-static uint64_t k_pop_m_m_q_rsp(unsigned long long it)                                     
+static uint64_t k_pop_m_m_q_rsp(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     void *w = (void *)IB_WBASE();                                                 
     for (i = 0; i < it; i++)                                                      
@@ -321,9 +321,9 @@ static uint64_t k_pop_m_m_q_rsp(unsigned long long it)
                 : [a] "+r"(a), [f] "=&r"(f) : [w] "r"(w) : "memory");             
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_pop_m_m_q_rsp_tp(unsigned long long it)                                
+static uint64_t k_pop_m_m_q_rsp_tp(ib_uw it)                                
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)((IB_SEED(0) & 0xffff) | 1), f = (IB_UQ)0;                            
     IB_UQ c = (IB_UQ)((IB_SEED(2) & 0xffff) | 1), g = (IB_UQ)0;                            
     IB_UQ e = (IB_UQ)((IB_SEED(4) & 0xffff) | 1), h = (IB_UQ)0;                            
@@ -369,9 +369,9 @@ static inline void k_pop_m_m_q_rsp_kat(int kk, ib_kv *g)
 }
 
 /* ---- pushf_r_f_q: IB_K_PUSHF ---- */
-static uint64_t k_pushf_r_f_q(unsigned long long it)                                     
+static uint64_t k_pushf_r_f_q(ib_uw it)                                     
 {                                                                                 
-    unsigned long long i;                                                         
+    ib_uw i;                                                         
     IB_UQ a = (IB_UQ)0, f = (IB_UQ)0;                                                      
     for (i = 0; i < it; i++)                                                      
         __asm__("pushfq" "\n\t"                                                       
@@ -380,7 +380,7 @@ static uint64_t k_pushf_r_f_q(unsigned long long it)
                 : [a] "+r"(a), [f] "=&r"(f) : : "memory");                        
     return IB_S1(a);                                                              
 }                                                                                 
-static uint64_t k_pushf_r_f_q_tp(unsigned long long it)                                
+static uint64_t k_pushf_r_f_q_tp(ib_uw it)                                
 {                                                                                 
     return k_pushf_r_f_q(it);                                                            
 }
@@ -406,7 +406,7 @@ static inline void k_pushf_r_f_q_kat(int kk, ib_kv *g)
 
 /* ---------------- 两 ABI 共有形态(无操作数, 尺寸由 ABI 定) ---------------- */
 /* ---- leave__: IB_K_LEAVE ---- */
-static uint64_t k_leave__(unsigned long long it)                                     
+static uint64_t k_leave__(ib_uw it)                                     
 {                                                                                 
     static unsigned char sb[4096] __attribute__((aligned(64)));                   
     volatile uint64_t *slot = (volatile uint64_t *)sb + 128;                      
@@ -436,14 +436,14 @@ static uint64_t k_leave__(unsigned long long it)
         : [vlk] "r"(vlk) : "memory", "cc");                                       
     return IB_S2((uint64_t)(obp - base), (uint64_t)(ors - base));                 
 }                                                                                 
-static uint64_t k_leave___tp(unsigned long long it)                                
+static uint64_t k_leave___tp(ib_uw it)                                
 {                                                                                 
     return k_leave__(it);                                                            
 }
 
 #ifdef __x86_64__
 /* ---- retf__: IB_K_RETF ---- */
-static uint64_t k_retf__(unsigned long long it)
+static uint64_t k_retf__(ib_uw it)
 {
     static unsigned char sb[4096] __attribute__((aligned(64)));
     uintptr_t base = (uintptr_t)sb;
@@ -476,14 +476,14 @@ static uint64_t k_retf__(unsigned long long it)
         : [vtop] "r"(vtop) : "memory", "cc");
     return IB_S2((uint64_t)(ors - base), (uint64_t)(rfr - base));
 }
-static uint64_t k_retf___tp(unsigned long long it)
+static uint64_t k_retf___tp(ib_uw it)
 {
     return k_retf__(it);
 }
 
 #else
 /* ---- retf__: IB_K_RETF ---- */
-static uint64_t k_retf__(unsigned long long it)                                     
+static uint64_t k_retf__(ib_uw it)                                     
 {                                                                                 
     static unsigned char sb[4096] __attribute__((aligned(64)));                   
     uintptr_t base = (uintptr_t)sb;                                               
@@ -516,7 +516,7 @@ static uint64_t k_retf__(unsigned long long it)
         : [vtop] "r"(vtop) : "memory", "cc");                                     
     return IB_S2((uint64_t)(ors - base), (uint64_t)(rfr - base));                 
 }                                                                                 
-static uint64_t k_retf___tp(unsigned long long it)                                
+static uint64_t k_retf___tp(ib_uw it)                                
 {                                                                                 
     return k_retf__(it);                                                            
 }

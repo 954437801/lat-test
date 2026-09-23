@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 {
     enum { N = 200000, NJ = 20000 };
     uint64_t t0, t1, el, mn, mx, sum;   /* 时间量整数纳秒(仅输出处转 double) */
-    unsigned long long i;
+    ib_uw i;
     char a[64], b[64], c[64];
 
     ib_init(argc, argv);

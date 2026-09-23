@@ -59,7 +59,7 @@ __attribute__((target("aes"))) static void aes128_expand_dec(void)
 }
 
 /* ==================== FIPS-197 KAT(自检: 展开/加密/解密) ==================== */
-__attribute__((target("aes"))) static uint64_t kat_keygen(unsigned long long it)
+__attribute__((target("aes"))) static uint64_t kat_keygen(ib_uw it)
 {
     (void)it;
     aes128_expand(KAT_KEY);
@@ -67,7 +67,7 @@ __attribute__((target("aes"))) static uint64_t kat_keygen(unsigned long long it)
     /* FIPS-197 AES-128 round key[1] = d6aa74fd d2af72fa daa678f1 d6ab76fe */
     return !memcmp(g_out, "\xd6\xaa\x74\xfd\xd2\xaf\x72\xfa\xda\xa6\x78\xf1\xd6\xab\x76\xfe", 16);
 }
-__attribute__((target("aes"))) static uint64_t kat_enc(unsigned long long it)
+__attribute__((target("aes"))) static uint64_t kat_enc(ib_uw it)
 {
     __m128i x;
     int i;
@@ -80,7 +80,7 @@ __attribute__((target("aes"))) static uint64_t kat_enc(unsigned long long it)
     _mm_storeu_si128((__m128i *)g_out, x);
     return !memcmp(g_out, KAT_CT, 16);
 }
-__attribute__((target("aes"))) static uint64_t kat_dec(unsigned long long it)
+__attribute__((target("aes"))) static uint64_t kat_dec(ib_uw it)
 {
     __m128i x;
     int i;
@@ -96,17 +96,17 @@ __attribute__((target("aes"))) static uint64_t kat_dec(unsigned long long it)
 }
 
 /* ==================== AESENC/AESDEC 依赖链(延迟) ==================== */
-__attribute__((target("aes"))) static uint64_t k_aesenc(unsigned long long iters)
+__attribute__((target("aes"))) static uint64_t k_aesenc(ib_uw iters)
 {
     __m128i x = _mm_loadu_si128((const __m128i *)KAT_PT);
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) x = _mm_aesenc_si128(x, g_rk[1]);
     return ib_sig128(x);
 }
-__attribute__((target("aes"))) static uint64_t k_aesenc_tp(unsigned long long iters)
+__attribute__((target("aes"))) static uint64_t k_aesenc_tp(ib_uw iters)
 {
     __m128i a[8];
-    unsigned long long i;
+    ib_uw i;
     int j;
     for (j = 0; j < 8; j++)
         a[j] = _mm_add_epi32(_mm_loadu_si128((const __m128i *)KAT_PT), _mm_set1_epi32(j));
@@ -119,17 +119,17 @@ __attribute__((target("aes"))) static uint64_t k_aesenc_tp(unsigned long long it
         return ib_sig128(s);
     }
 }
-__attribute__((target("aes"))) static uint64_t k_aesdec(unsigned long long iters)
+__attribute__((target("aes"))) static uint64_t k_aesdec(ib_uw iters)
 {
     __m128i x = _mm_loadu_si128((const __m128i *)KAT_CT);
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) x = _mm_aesdec_si128(x, g_rk[1]);
     return ib_sig128(x);
 }
-__attribute__((target("aes"))) static uint64_t k_aesdec_tp(unsigned long long iters)
+__attribute__((target("aes"))) static uint64_t k_aesdec_tp(ib_uw iters)
 {
     __m128i a[8];
-    unsigned long long i;
+    ib_uw i;
     int j;
     for (j = 0; j < 8; j++)
         a[j] = _mm_add_epi32(_mm_loadu_si128((const __m128i *)KAT_CT), _mm_set1_epi32(j));
@@ -144,22 +144,22 @@ __attribute__((target("aes"))) static uint64_t k_aesdec_tp(unsigned long long it
 }
 
 /* ==================== PCLMULQDQ(target="pclmul") ==================== */
-__attribute__((target("pclmul"))) static uint64_t k_pclmulqdq(unsigned long long iters)
+__attribute__((target("pclmul"))) static uint64_t k_pclmulqdq(ib_uw iters)
 {
     __m128i x = _mm_set_epi64x(0x123456789abcULL, 0xdeadbeefcafeULL);
     __m128i k = _mm_set_epi64x(1, 0x87ULL);
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) x = _mm_clmulepi64_si128(x, k, 0x00);
     return ib_sig128(x);
 }
-__attribute__((target("pclmul"))) static uint64_t k_pclmulqdq_tp(unsigned long long iters)
+__attribute__((target("pclmul"))) static uint64_t k_pclmulqdq_tp(ib_uw iters)
 {
     __m128i a = _mm_set_epi64x(0x123456789abcULL, 0xdeadbeefcafeULL),
             b = _mm_set_epi64x(0x13579bdf02468aceULL, 0x1020304050607080ULL),
             c = _mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x1122334455667788ULL),
             d = _mm_set_epi64x(0x7f7e7d7c7b7a7978ULL, 0x8877665544332211ULL);
     __m128i k = _mm_set_epi64x(1, 0x87ULL);
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) {
         a = _mm_clmulepi64_si128(a, k, 0x00); b = _mm_clmulepi64_si128(b, k, 0x00);
         c = _mm_clmulepi64_si128(c, k, 0x00); d = _mm_clmulepi64_si128(d, k, 0x00);
@@ -168,16 +168,16 @@ __attribute__((target("pclmul"))) static uint64_t k_pclmulqdq_tp(unsigned long l
 }
 
 /* ==================== SHA256RNDS2(target="sha", 隐含 XMM0 传 W) ==================== */
-__attribute__((target("sha"))) static uint64_t k_sha256rnds2(unsigned long long iters)
+__attribute__((target("sha"))) static uint64_t k_sha256rnds2(ib_uw iters)
 {
     __m128i abcd = _mm_set_epi64x(0x6a09e667bb67ae85ULL, 0x3c6ef372a54ff53aULL);
     __m128i efgh = _mm_set_epi64x(0x5be0cd191f83d9abULL, 0x9b5f011380deb1ULL);
     __m128i msg = _mm_set_epi64x(0x11111111ULL, 0x22222222ULL);
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) abcd = _mm_sha256rnds2_epu32(abcd, efgh, msg);
     return ib_sig128(abcd);
 }
-__attribute__((target("sha"))) static uint64_t k_sha256rnds2_tp(unsigned long long iters)
+__attribute__((target("sha"))) static uint64_t k_sha256rnds2_tp(ib_uw iters)
 {
     __m128i a = _mm_set_epi64x(0x6a09e667bb67ae85ULL, 0x3c6ef372a54ff53aULL);
     __m128i b = _mm_set_epi64x(0xbb67ae856a09e667ULL, 0xa54ff53a3c6ef372ULL);
@@ -185,7 +185,7 @@ __attribute__((target("sha"))) static uint64_t k_sha256rnds2_tp(unsigned long lo
     __m128i d = _mm_set_epi64x(0x9b05688c2b3e6c1fULL, 0x1f83d9abfb41bd6bULL);
     __m128i e = _mm_set_epi64x(0x5be0cd191f83d9abULL, 0x9b5f011380deb1ULL);
     __m128i msg = _mm_set_epi64x(0x11111111ULL, 0x22222222ULL);
-    unsigned long long i;
+    ib_uw i;
     for (i = 0; i < iters; i++) {
         a = _mm_sha256rnds2_epu32(a, e, msg);
         b = _mm_sha256rnds2_epu32(b, e, msg);

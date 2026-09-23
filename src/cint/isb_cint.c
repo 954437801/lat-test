@@ -3,9 +3,13 @@
  * 与 isb_cfloat.c 同构(参考其设计), 只是把"浮点类型"换成"整数类型":
  *   测一段 C 程序的普通整数运算(加/减/乘/除)编译后, 落到不同位宽整数类型上的实际
  *   速度。统一用 C 通用无符号类型名(不写任何内联汇编, 让编译器自己挑指令):
- *   uint8_t=8、uint16_t=16、uint32_t=32、uint64_t=64、unsigned __int128=128。
- *   类型 x {add,sub,mul,div}: 支持 __int128 的形态(64 位)= 20 用例(i8_add ... i128_div);
- *   i386 无 __int128, 自动降到 16 用例。
+ *   uint8_t=8、uint16_t=16、uint32_t=32、uint64_t=64。
+ *   类型 x {add,sub,mul,div} = 16 用例(i8_add ... i64_div); 两 ABI 用例数一致。
+ *   **禁用 128 位类型**: unsigned __int128 不是主流标量, 且 i386 目标根本不支持。
+ *
+ * 循环与控制变量取"本机字长"(ci_uw): i386=32 位、x64/loongarch64=64 位。这是关键 ——
+ *   控制变量若取 64 位, i386 上每轮多一条 `add $1,%eax; adc $0,%edx`(进位对), 在旗标写
+ *   昂贵的 i386 路径上会把整轮钉在脚手架地板(实测 3.91ns), 淹没被测运算的真实延迟。
  *
  * 为什么用无符号: 有符号整数的 add/sub/mul 溢出是 UB(编译器可假设不发生并据此化简,
  *   破坏"这条指令真的执行了"的测量前提), 而无符号溢出是良好定义的模 2^N 回绕 —— 依赖
@@ -59,6 +63,10 @@ static uint64_t ci_fold(const void *p, int n)
     return h;
 }
 
+/* 本机字长整型: i386=32、x64/loongarch64=64。用作循环/控制变量与用例的 iter 计数,
+ * 使两 ABI 各自跑在原生字长上(见文件头: 避免 i386 的 64 位计数器把整轮打成地板)。 */
+typedef uintptr_t ci_uw;
+
 /* 生成一条 lat 用例: acc 依赖链 acc = acc <op> b, 跑 iters 次取平均纳秒。
  *   - b 是 volatile(每轮真做一次内存读): 关键 —— 整数是可结合的, 若 b 为普通不变
  *     局部, GCC 会把 `acc=acc+b` 的计数循环强度折叠成 `acc+=b*iters`(闭式), 循环消失、
@@ -68,11 +76,11 @@ static uint64_t ci_fold(const void *p, int n)
  *     整型恒等化简(x*1->x)用不上 -> 每轮真执行一次乘/除。全程无符号、无 UB、除数非零。
  * TYPE: 无符号整型名(uint8_t 等); tag: i8/i16/i32/i64。 */
 #define CI_LAT(TYPE, tag, op, EXPR)                                           \
-static uint64_t lat_##tag##_##op(unsigned long long iters)                   \
+static uint64_t lat_##tag##_##op(ci_uw iters)                   \
 {                                                                             \
     volatile TYPE b = (TYPE)1;                                               \
     TYPE acc = b;                                                            \
-    unsigned long long i;                                                    \
+    ci_uw i;                                                    \
     for (i = 0; i < iters; i++)                                             \
         acc = (EXPR);                                                        \
     CI_BARRIER();                                                            \
@@ -97,20 +105,12 @@ CI_LAT(uint64_t, i64, sub, acc - b)
 CI_LAT(uint64_t, i64, mul, acc * b)
 CI_LAT(uint64_t, i64, div, acc / b)
 
-/* 128 位整数: GCC 扩展 unsigned __int128, 仅在有 TImode 支持的 64 位目标可用
- * (x86_64 / loongarch64; i386 无)。add 走 adc 双 64 位序列, mul/div 走 libgcc 软件
- * 例程(__multi3/__udivti3) —— 与 cfloat 的 f128 对偶, 测"宽到软件实现"的代价。
- * 用 __SIZEOF_INT128__ 宏门控: 缺此类型的形态(i386)整块不参与编译, 该形态自然只 16 条。 */
-#ifdef __SIZEOF_INT128__
-CI_LAT(unsigned __int128, i128, add, acc + b)
-CI_LAT(unsigned __int128, i128, sub, acc - b)
-CI_LAT(unsigned __int128, i128, mul, acc * b)
-CI_LAT(unsigned __int128, i128, div, acc / b)
-#endif
+/* 128 位整型已按口径移除(禁止 128 位变量): 它不是主流标量、i386 目标不支持, 保留会
+ * 让两 ABI 用例数不一致。需要测"宽到软件实现"的代价时, 归 cfloat 的 f128 组。 */
 
 struct ci_case {
     const char *name;
-    uint64_t (*lat)(unsigned long long iters);
+    uint64_t (*lat)(ci_uw iters);
 };
 static const struct ci_case g_cases[] = {
     { "i8_add",  lat_i8_add  }, { "i8_sub",  lat_i8_sub  },
@@ -121,10 +121,6 @@ static const struct ci_case g_cases[] = {
     { "i32_mul", lat_i32_mul }, { "i32_div", lat_i32_div },
     { "i64_add", lat_i64_add }, { "i64_sub", lat_i64_sub },
     { "i64_mul", lat_i64_mul }, { "i64_div", lat_i64_div },
-#ifdef __SIZEOF_INT128__
-    { "i128_add", lat_i128_add }, { "i128_sub", lat_i128_sub },
-    { "i128_mul", lat_i128_mul }, { "i128_div", lat_i128_div },
-#endif
 };
 #define NCASES ((int)(sizeof(g_cases) / sizeof(g_cases[0])))
 
@@ -150,7 +146,7 @@ static int name_ok(const char *only, const char *name)
 int main(int argc, char **argv)
 {
     const char *abi = "x86_64", *os = "linux";
-    unsigned long long iters = 200000;   /* 仅 lat, 整数很快, 默认 20 万次 */
+    ci_uw iters = 200000;                /* 仅 lat, 整数很快, 默认 20 万次; 本机字长 */
     const char *only = NULL;
     const char *bits;
     int i, ok = 0, tot = 0;
@@ -173,7 +169,7 @@ int main(int argc, char **argv)
     }
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--iters") && i + 1 < argc) {
-            iters = strtoull(argv[++i], NULL, 0);
+            iters = (ci_uw)strtoull(argv[++i], NULL, 0);
             if (!iters)
                 iters = 200000;
         } else if (!strncmp(argv[i], "--only=", 7)) {
