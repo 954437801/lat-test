@@ -1296,6 +1296,103 @@ static inline void k_sbb_r_r_w_kat(int kk, ib_kv *g)
     g->outf = (uint64_t)fl & (IB_FLG_MASK);                                                
 }
 
+/* ==== BEGIN fn=k_adc_r_r_l ==== */
+/* ---- adc_r_r_l: IB_K_ADC (32 位 adc r,r —— 补齐既有 sbb 有而 adc 缺的 32 位形态) ---- */
+static uint64_t k_adc_r_r_l(unsigned long long it)
+{
+    unsigned long long i;
+    IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);
+    for (i = 0; i < it; i++) {
+        IB_PROT_P(i);
+        IB_PROT_X(i);
+        __asm__("" "\n\t" "cmp" "l" " $1,%[a]\n\t" "adc" " " "%[b],%[a]"
+                : [a] "+a"(a) : [b] "b"(b), [p] "r"(p), [ix] "r"(ix)
+                : "cc", "memory");
+    }
+    return IB_S1(a);
+}
+/* ==== END fn=k_adc_r_r_l ==== */
+static uint64_t k_adc_r_r_l_tp(unsigned long long it)
+{
+    unsigned long long i;
+    IB_UL a = (IB_UL)IB_SEED(0), c = (IB_UL)IB_SEED(2), b = (IB_UL)IB_SEED(1),
+       d = (IB_UL)IB_SEED(3);
+    for (i = 0; i < it; i++) {
+        IB_PROT_P(i);
+        IB_PROT_X(i);
+        __asm__("" "\n\t" "cmp" "l" " $1,%[a]\n\t" "adc" " " "%[b],%[a]"
+                : [a] "+a"(a) : [b] "b"(b), [p] "r"(p), [ix] "r"(ix)
+                : "cc", "memory");
+        /* 第二链: 操作数**名字**必须与 "%[b],%[a]" 里引的一致([a]/[b]), 只换绑定的变量 */
+        __asm__("" "\n\t" "cmp" "l" " $1,%[a]\n\t" "adc" " " "%[b],%[a]"
+                : [a] "+c"(c) : [b] "d"(d), [p] "r"(p), [ix] "r"(ix)
+                : "cc", "memory");
+    }
+    return IB_S2(a, c);
+}
+
+/* ---- adc_r_r_l: IB_KT_FLG ---- */
+static inline void k_adc_r_r_l_kat(int kk, ib_kv *g)
+{
+    IB_UL a = (IB_UL)IB_KIN8("adc_r_r_l", kk, 0, IB_UL), b = (IB_UL)IB_KIN8("adc_r_r_l", kk, 1, IB_UL);
+    IB_UL ain = a;
+    void *p = ib_kbuf_fill((uint64_t)b);
+    uintptr_t ix = (uintptr_t)((unsigned)kk & 7u);
+    uintptr_t fv = (uintptr_t)IB_KFL("adc_r_r_l", kk), fl = 0;
+    __asm__ volatile(IB_SETF "adc" " " "%[b],%[a]" IB_GETF
+                    : [a] "+a"(a), [fl] "=&r"(fl)
+                    : [b] "q"(b), [p] "r"(p), [ix] "r"(ix), [fv] "r"(fv)
+                    : "cc", "memory");
+    g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b;   g->inf = (uint64_t)fv;
+    g->o0 = (uint64_t)a;   g->o1 = (uint64_t)b;
+    g->outf = (uint64_t)fl & (IB_FLG_MASK);
+}
+
+/* ==== BEGIN fn=k_add_adc_r_r_l ==== */
+/* ---- add_adc_r_r_l: IB_K_ADDADC ----
+ * S1 专门形态: add 的 CF 只被紧随的 adc 消费(64 位整数加法的低/高字进位对)。
+ * lat 是循环内核, TB 出口无旗标读 -> 该 add/adc 对在 LATX 下走 S1 标量替换
+ * (GPR 内算进位, 不发 LBT 旗标写); sbb 式的 cmp 重建在此换成 add, 正好构成进位链。 */
+static uint64_t k_add_adc_r_r_l(unsigned long long it)
+{
+    unsigned long long i;
+    IB_UL a = (IB_UL)IB_SEED(0), b = (IB_UL)IB_SEED(1);
+    IB_UL c = (IB_UL)IB_SEED(2), d = (IB_UL)IB_SEED(3);
+    for (i = 0; i < it; i++) {
+        IB_PROT_P(i);
+        IB_PROT_X(i);
+        __asm__("" "\n\t" "add" "l" " %[b],%[a]\n\t" "adc" "l" " %[d],%[c]"
+                : [a] "+a"(a), [c] "+c"(c)
+                : [b] "b"(b), [d] "d"(d), [p] "r"(p), [ix] "r"(ix)
+                : "cc", "memory");
+    }
+    return IB_S2(a, c);
+}
+/* ==== END fn=k_add_adc_r_r_l ==== */
+static uint64_t k_add_adc_r_r_l_tp(unsigned long long it)
+{
+    return k_add_adc_r_r_l(it);   /* add->adc 进位对串行, 吞吐与延迟同核(见组头注) */
+}
+
+/* ---- add_adc_r_r_l: IB_KT_FLG ---- */
+static inline void k_add_adc_r_r_l_kat(int kk, ib_kv *g)
+{
+    IB_UL a = (IB_UL)IB_KIN8("add_adc_r_r_l", kk, 0, IB_UL), b = (IB_UL)IB_KIN8("add_adc_r_r_l", kk, 1, IB_UL);
+    IB_UL c = (IB_UL)IB_KIN8("add_adc_r_r_l", kk, 2, IB_UL), d = (IB_UL)IB_KIN8("add_adc_r_r_l", kk, 3, IB_UL);
+    IB_UL ain = a, cin = c;
+    void *p = ib_kbuf_fill((uint64_t)b);
+    uintptr_t ix = (uintptr_t)((unsigned)kk & 7u);
+    uintptr_t fv = (uintptr_t)IB_KFL("add_adc_r_r_l", kk), fl = 0;
+    __asm__ volatile(IB_SETF "add" "l" " %[b],%[a]\n\t" "adc" "l" " %[d],%[c]" IB_GETF
+                    : [a] "+a"(a), [c] "+c"(c), [fl] "=&r"(fl)
+                    : [b] "q"(b), [d] "q"(d), [fv] "r"(fv)
+                    : "cc", "memory");
+    g->i0 = (uint64_t)ain; g->i1 = (uint64_t)b; g->i2 = (uint64_t)cin; g->i3 = (uint64_t)d;
+    g->inf = (uint64_t)fv;
+    g->o0 = (uint64_t)a;   g->o1 = (uint64_t)b; g->o2 = (uint64_t)c; g->o3 = (uint64_t)d;
+    g->outf = (uint64_t)fl & (IB_FLG_MASK);
+}
+
 /* ---- imul_r_i_l: IB_K_R3 ---- */
 static uint64_t k_imul_r_i_l(unsigned long long it)                                     
 {                                                                                 
@@ -1388,6 +1485,8 @@ static const ib_case g_cases[] = {
     IB_ROW_K("x86_sbb__r_r_l",        NULL, sbb_r_r_l,        4),
     IB_ROW_K("x86_sbb__r_i_l",        NULL, sbb_r_i_l,        4),
     IB_ROW_K("x86_sbb__r_r_w",        NULL, sbb_r_r_w,        2),
+    IB_ROW_K("x86_adc__r_r_l",        NULL, adc_r_r_l,        4),
+    IB_ROW_K("x86_add_adc__r_r_l",    NULL, add_adc_r_r_l,    4),
     IB_ROW_K("x86_imul__r_i_l",       NULL, imul_r_i_l,       4),
     IB_ROW_KPL("x86_idiv__r__l",      NULL, idiv_r__l,        4, 20000),
 #ifdef __x86_64__

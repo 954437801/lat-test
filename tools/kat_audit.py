@@ -2043,6 +2043,12 @@ def expect(stem, i0, i1, inf, w, grp=None, kk=0, i2=0, i3=0):
         # vec 组(直写)同坑: 词干里没有宽度段也没有形态段, 而且操作数是 128 位
         # lane 向量 —— sides()/width_of() 那套逐段拆分在这里没有任何可拆的东西
         return vec_expect(stem, i0, i1, inf, w)
+    if stem == "add_adc_r_r_l":
+        # 复合进位对(S1 唯一一条非"单指令形态"用例): lo = i0+i1; hi = i2+i3+CF(lo)。
+        # 出标志取末端 adc 的结果 —— 拿 op=split("_")[0]="add" 当单条 add 复算是错的。
+        lo, _, f1 = add_sub(i0, i1, 0, w, False)
+        hi, _, f2 = add_sub(i2, i3, f1["CF"], w, False)
+        return {"o0": lo, "o1": i1, "o2": hi, "o3": i3, **f2}
     op = stem.split("_")[0]
     mask = (1 << w) - 1
     c_in = inf & 1                          # CF: 探针 IB_SETF 注入的输入标志
